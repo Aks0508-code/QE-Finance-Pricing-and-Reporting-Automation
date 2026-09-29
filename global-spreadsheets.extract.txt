@@ -1,0 +1,137 @@
+
+### Adjustment Calculation Example Scenarios.xlsx
+A1=Input | I1=Table Info | O1=Output
+B2=order id | C2=customer id | D2=ship to | E2=order date | F2=item id | G2=quantity | H2=price | J2=surcharge | K2=item class | L2=percentage detail | M2=percentage override | N2=active code | P2=adjustment | Q2=status | R2=adjustment amount | T2=explanation
+C3=123456 | E3=45579 | F3=D275-01 | G3=1 | H3=11.99 | K3=ZEDF | Q3=1 | R3=0 | T3=class not in detail
+C4=123456 | E4=45582 | F4=30179 | G4=10 | H4=25.75 | J4=ISC | K4=WVWB | L4=5 | N4=1 | P4=ISC Import Surcharge | Q4=2 | R4=13 | T4=in detail at 5%
+C5=123456 | E5=45672 | F5=30179 | G5=10 | H5=25.75 | J5=ISC | K5=WVWB | L5=5 | N5=1 | Q5=1 | R5=0 | T5=Order date outside range
+C6=123456 | E6=45582 | F6=B255-31 | G6=10 | H6=44.25 | J6=SSC | K6=ZABC | L6=6 | N6=1 | P6=SSC Surcharge Sales | Q6=2 | R6=27 | T6=in detail at 6%
+C7=123456 | E7=45582 | F7=51542 | G7=10 | H7=44.25 | J7=SSC | K7=WVHC | L7=6 | N7=1 | P7=SSC Surcharge Sales | Q7=2 | R7=27 | T7=valid detail for ISC(5%) and SSC(6%), output both surcharges
+E8= | J8=ISC | K8=WVHC | L8=5 | N8=1 | P8=ISC Import Surcharge | Q8=2 | R8=23 | T8=valid detail for ISC(5%) and SSC(6%), output both surcharges
+E9=
+E10=
+C11=109200 | D11=6 | E11=45579 | F11=D275-01 | G11=1 | H11=11.99 | K11=ZEDF | Q11=1 | R11=0 | T11=class not in override or detail
+C12=109200 | D12=6 | E12=45582 | F12=30179 | G12=10 | H12=25.75 | J12=ISC | K12=WVWB | L12=5 | M12=2 | N12=1 | P12=ISC Import Surcharge | Q12=2 | R12=6 | T12=customer override at 2%
+C13=109200 | D13=6 | E13=45672 | F13=30179 | G13=10 | H13=25.75 | J13=ISC | K13=WVWB | L13=5 | M13=2 | N13=1 | Q13=1 | R13=0 | T13=Order date outside range
+C14=109200 | D14=6 | E14=45582 | F14=B255-31 | G14=10 | H14=44.25 | J14=SSC | K14=ZABC | L14=6 | M14=2 | N14=1 | P14=SSC Surcharge Sales | Q14=2 | R14=9 | T14=customer override at 2%
+C15=109200 | D15=6 | E15=45582 | F15=51542 | G15=10 | H15=44.25 | J15=SSC | K15=WVHC | L15=6 | M15=2 | N15=1 | P15=SSC Surcharge Sales | Q15=2 | R15=9 | T15=valid overrides for ISC(2%) and SSC(2%), output both surcharges
+E16= | J16=ISC | K16=WVHC | L16=5 | M16=2 | N16=1 | P16=ISC Import Surcharge | Q16=2 | R16=9 | T16=valid overrides for ISC(2%) and SSC(2%), output both surcharges
+E17=
+E18=
+C19=193300 | D19=85 | E19=45579 | F19=D275-01 | G19=1 | H19=11.99 | K19=ZEDF | Q19=1 | R19=0 | T19=class not in override or detail
+C20=193300 | D20=85 | E20=45582 | F20=30179 | G20=10 | H20=25.75 | J20=ISC | K20=WVWB | L20=5 | M20=3 | N20=1 | Q20=2 | R20=13 | T20=Order date outside range for override, detail record has valid 5% entry
+C21=193300 | D21=85 | E21=45611 | F21=30179 | G21=10 | H21=25.75 | J21=ISC | K21=WVWB | L21=5 | M21=3 | N21=1 | P21=ISC Import Surcharge | Q21=2 | R21=8 | T21=customer override at 3%
+C22=193300 | D22=85 | E22=45672 | F22=30179 | G22=10 | H22=25.75 | J22=ISC | K22=WVWB | L22=5 | M22=3 | N22=1 | Q22=1 | R22=0 | T22=Order date outside range
+C23=193300 | D23=85 | E23=45582 | F23=B255-31 | G23=10 | H23=44.25 | J23=SSC | K23=ZABC | L23=6 | N23=1 | P23=SSC Surcharge Sales | Q23=2 | R23=27 | T23=in detail at 6%
+C24=193300 | D24=85 | E24=45582 | F24=51542 | G24=10 | H24=44.25 | J24=SSC | K24=WVHC | L24=6 | N24=1 | P24=SSC Surcharge Sales | Q24=2 | R24=27 | T24=in detail SSC(6%) customer overide ISC(2%), output both surcharges
+E25= | J25=ISC | K25=WVHC | L25=5 | M25=2 | N25=1 | P25=ISC Import Surcharge | Q25=2 | R25=9 | T25=in detail SSC(6%) customer overide ISC(2%), output both surcharges
+E26=
+C28=131100 | D28=10 | E28=45579 | F28=D275-01 | G28=1 | H28=11.99 | J28=ISC | K28=ZEDF | N28=1 | P28=ISC Import Surcharge | Q28=1 | R28=0 | T28=exclude customer from ISC surcharge
+C29=131100 | D29=10 | E29=45582 | F29=30179 | G29=10 | H29=25.75 | J29=ISC | K29=WVWB | N29=1 | P29=ISC Import Surcharge | Q29=1 | R29=0 | T29=exclude customer from ISC surcharge
+C30=131100 | D30=10 | E30=45672 | F30=30179 | G30=10 | H30=25.75 | J30=ISC | K30=WVWB | N30=1 | P30=ISC Import Surcharge | Q30=1 | R30=0 | T30=exclude customer from ISC surcharge
+C31=131100 | D31=10 | E31=45582 | F31=B255-31 | G31=10 | H31=44.25 | J31=SSC | K31=ZABC | L31=6 | N31=1 | P31=SSC Surcharge Sales | Q31=2 | R31=27 | T31=in detail at 6%
+C32=131100 | D32=10 | E32=45582 | F32=51542 | G32=10 | H32=44.25 | J32=SSC | K32=WVHC | L32=6 | N32=1 | P32=SSC Surcharge Sales | Q32=2 | R32=27 | T32=in detail at 6%
+C35=123456 | E35=45582 | F35=ZZZZZ | G35=5 | H35=33.549999999999997 | Q35=1 | R35=0 | T35=no item class, invalid item
+
+### Adjustment Microservice URL's.xlsx
+A1=API | B1=Environment | C1=Deployed | D1=URL
+
+A3=Adjustment Microservice | B3=stage  | C3=yes | D3=https://aazeus-fnprwb01.ashleyfurniture.com/AdjustmentAPI/Adjustment/Orders
+B4=prod | C4=yes | D4=https://ae1dcvpwb23767.ashleyfurniture.com/AdjustmentAPI/Adjustment/Orders
+A5=PIM Private Product data | B5=stage  | C5=yes | D5=https://aazeus-fnprwb01.ashleyfurniture.com/PIMAPI/PIM/GetItemAndSeriesDetails
+B6=prod | C6=no | D6=https://ae1dcvpwb23767.ashleyfurniture.com/PIMAPI/PIM/GetItemAndSeriesDetails
+A7=Adjustment Header Private data | B7=stage  | C7=yes | D7=https://aazeus-fnprwb01.ashleyfurniture.com/PIMAPI/PIM/GetAdjustmentHeaders
+B8=prod | C8=no | D8=https://ae1dcvpwb23767.ashleyfurniture.com/PIMAPI/PIM/GetAdjustmentHeaders
+A9=Adjustment Detail Private data | B9=stage  | C9=no | D9=https://aazeus-fnprwb01.ashleyfurniture.com/PIMAPI/PIM/GetAdjustmentDetails
+B10=prod | C10=no | D10=https://ae1dcvpwb23767.ashleyfurniture.com/PIMAPI/PIM/GetAdjustmentDetails
+A11=Adjustment Override Private data | B11=stage  | C11=no | D11=https://aazeus-fnprwb01.ashleyfurniture.com/PIMAPI/PIM/GetAdjustmentOverride
+B12=prod | C12=no | D12=https://ae1dcvpwb23767.ashleyfurniture.com/PIMAPI/PIM/GetAdjustmentOverride
+
+### E2E Test Scenarios.xlsx
+A1=                                                                                            E2E Testing | B1= | C1= | D1=
+A2=Microservice | B2=UI | C2=Data Sync | D2=Exclusion
+A3=Validate Date Format without passing date only with timezone | B3=Global Header Check | C3=Email Alert Check | D3=Cust - Ship -Warehouse Exclusion
+A4=Validate Customer  | B4=Global Detail - Search,Add, Edit,Save,Cancel,Update,Export and Upload,Active code | C4=Sql Verification | D4=Cust - Ship -Warehouse with  1Item  other item no exclusion
+A5=Validate shipto | B5=Customer Override - Search,Add New, Save,Cancel,Export,Active Code | C5=Microservice Check | D5=Cust-Ship-Warehouse Exclusion with All Item exclusion
+A6=Validate warehouse | B6=New Customer override-Add new,Cancel | C6=Switch OFF | D6=Cust- Ship-Warehouse without customer exclusion only item exclusion
+A7=Validate Quantity  | B7=Item Exclusion-Add New,Save,Cancel,Upload List excel,export to excel,Search ,Active Code | C7= | D7=Cust-Ship-Warehouse-Itemnumber no exclusion
+A8=Validate Price | B8=Customer Exclusion-Add New,Save,Cancel,Upload List excel,export to excel,Search ,Active Code | C8= | D8=
+A9=Validate ItemNumber | B9=Enable True to False | C9= | D9=
+A10=Validate Order ID | B10=Modifications in UI | C10= | D10=
+A11=Validate  Negative values | B11= | C11= | D11=
+A12=Validate combination scenarios | B12= | C12= | D12=
+A13=Valid Customer,Shipto,Warehouse matching customer table | B13= | C13= | D13=
+A14=Valid Customer,Shipto,Warehouse falls in adjustment table | B14= | C14= | D14=
+A15=Customer and Shipto with Blank Warehouse  | B15= | C15= | D15=
+A16=Customer and Ship To- Blank ,Warehouse- Blank | B16= | C16= | D16=
+A17=Item Level check with customer table  | B17= | C17= | D17=
+A18=Item Level Check with Adjustment Table | B18= | C18= | D18=
+A19=Customer exclusion Check  with Customer table | B19= | C19= | D19=
+A20=Item Exclusion Check  | B20= | C20= | D20=
+A21=Customer exclusion with Item Exclusion check | B21= | C21= | D21=
+A22=Customer exclusion without item Exclusion Check | B22= | C22= | D22=
+A23=Valid Check of Date Format | B23= | C23= | D23=
+A24=Surcharge Calculation Check | B24= | C24= | D24=
+A25=Price 0 Quantity 1 surcharge check | B25= | C25= | D25=
+A26=Price 0 Quantity 0 surcharge check | B26= | C26= | D26=
+A27=Price 1  Quantity 0 surcharge check | B27= | C27= | D27=
+A28=Price 1 quantity 1 Check | B28= | C28= | D28=
+A29=Positive scenario check | B29= | C29= | D29=
+
+### E2E Test Scenarios.xlsx
+F1=Customer | G1=Ship To | H1=Order Date | I1=Warehouse | J1=Item ID | K1=Result | L1=Table 
+F2=3313200 | G2=`02 | H2=45828 | I2=Null | J2="W549-68", "W548-68" | K2=TSC Surcharge Returns for both Items | L2=Matches Adjustment TABLE- percentage 4
+F3=3313200 | G3=`02 | H3=45833 | I3=Blank | J3="W549-68", "W548-68" | K3=No Exclusion Happening - TSC is calculated-Expected Exclusion should happen | L3=Matches the customer table - percentage Null
+F4=3313200 | G4=`02 | H4=45829 | I4=Value Passed-AB | J4="W549-68", "W548-68" | K4=No Exclusion Happening - TSC is calculated,because Blank means All hence expected is to exclude  | L4=Matches Adjustment TABLE- percentage 4
+F5=3313200 | G5=`03 | H5=45771 | I5=Null | J5="W549-68", "W548-68" | K5=TSC,ISC,SSC Surcharge Returns for both Items | L5=Matches Adjustment TABLE- percentage 2,5,6
+F6=3313200 | G6=`03 | H6=45838 | I6=Blank | J6="W549-68", "W548-68" | K6=TSC Surcharge Returns for both Items | L6=Matches Adjustment TABLE- percentage 4
+F7=3313200 | G7=`03 | H7=45809 | I7=Value Passed-15A | J7="W549-68", "W548-68" | K7=TSC Surcharge Returns for both Items | L7=Matches Adjustment TABLE- percentage 4
+F9= | G9= | H9= | I9= | J9= | K9=Recent Changes: Immediate fixes leds to working on the specified range of date exclusion happening but logical wise it not statisfying | L9=
+F10=3313200 | G10=`02 | H10=45772 | I10=Blank | J10="W549-68", "W548-68" | K10=Exclusion Happening- Expected No Exclusion Should happen as it is not satisying the date range in the exclusion table itself hence it should bring the value from adjustment detail table | L10=Matches the Adjusment table
+F16=2575700 | G16=1 | H16=45830 | I16=15A | J16=W549-68 | K16=TSC surcharge calculated from Adj Detail
+
+### E2E Test Scenarios.xlsx
+G1=45827 | H1= | I1= | J1= | K1= | L1= | M1= | N1=
+G2=Logic | H2=Customer | I2=Shipto | J2=Warehouse | K2=Item_ID(With Level Value) | L2=Order Date | M2=Result | N2=Comments
+G3=Customer Exclusion | H3= | I3= | J3=NULL | K3= | L3= | M3= | N3=
+G4= | H4= | I4= | J4=BLANK | K4= | L4= | M4= | N4=
+G5= | H5=3313200 | I5=02 | J5=335 | K5=B044-26-ZDYB | L5=45820 | M5=TSC (2.5%) applied | N5=
+G6=Item Exclusion | H6= | I6= | J6=Actual Value | K6= | L6= | M6= | N6=
+G7= | H7= | I7= | J7=Blank | K7= | L7= | M7= | N7=
+G8= | H8= | I8= | J8=Null | K8= | L8= | M8= | N8=
+G9=Customer Override | H9=2307300 | I9=01 | J9=335 | K9=                                             "item_id": "B044-26"ZDYB | L9=45820 | M9=TSC(1.5%)applied | N9=
+G10= | H10= | I10= | J10=NULL | K10= | L10= | M10= | N10=
+G11= | H11= | I11= | J11=BLANK | K11= | L11= | M11= | N11=
+G12=Adjustment Detail | H12=2575700 | I12=02 | J12=19 | K12=ZDYB | L12=45857 | M12=No Surcharge-Expected | N12=
+G13= | H13=2575700 | I13=02 | J13=NULL | K13= | L13=45857 | M13=No Surcharge | N13=
+G14= | H14=2575700 | I14=02 | J14=BLANK | K14=ZDYB | L14=45824 | M14=TSC (1.5%) applied | N14=Screenshot pasted in sheet 1-A1
+G15=Full Positive Surcharge returns | H15= | I15= | J15=Actual Value | K15= | L15= | M15= | N15=
+G16= | H16= | I16= | J16=NULL | K16= | L16= | M16= | N16=
+G17= | H17= | I17= | J17=BLANK | K17= | L17= | M17= | N17=
+G18=Both Customer and Item exclusion | H18= | I18= | J18=Actual Value | K18= | L18= | M18= | N18=
+G19= | H19= | I19= | J19=NULL | K19= | L19= | M19= | N19=
+G20= | H20= | I20= | J20=BLANK | K20= | L20= | M20= | N20=
+
+### E2E Test Scenarios.xlsx
+
+
+### E2E Test Scenarios.xlsx
+F2=Logic | G2=Customer | H2=Shipto | I2=Warehouse | J2=Item_ID(With Level Value) | K2=Order Date | L2=Result | M2=Comments
+F3=Customer Exclusion | G3=700 | H3=01 | I3=BLANK | J3= | K3= | L3= | M3=
+F4= | G4=109200 | H4=04 | I4=NULL | J4= | K4= | L4= | M4=
+F5= | G5=1059900 | H5=01 | I5=ECR | J5= | K5= | L5= | M5=
+F6=Item Exclusion | G6= | H6= | I6= | J6= | K6= | L6= | M6=
+F7= | G7= | H7= | I7= | J7= | K7= | L7= | M7=
+F8= | G8= | H8= | I8= | J8= | K8= | L8= | M8=
+F9=Customer Override | G9= | H9= | I9= | J9= | K9= | L9= | M9=
+F10= | G10= | H10= | I10= | J10= | K10= | L10= | M10=
+F11= | G11= | H11= | I11= | J11= | K11= | L11= | M11=
+F12=Adjustment Detail | G12= | H12= | I12= | J12= | K12= | L12= | M12=
+F13= | G13= | H13= | I13= | J13= | K13= | L13= | M13=
+F14= | G14= | H14= | I14= | J14= | K14= | L14= | M14=
+F15=Full Positive Surcharge returns | G15= | H15= | I15= | J15= | K15= | L15= | M15=
+F16= | G16= | H16= | I16= | J16= | K16= | L16= | M16=
+F17= | G17= | H17= | I17= | J17= | K17= | L17= | M17=
+F18=Both Customer and Item exclusion | G18= | H18= | I18= | J18= | K18= | L18= | M18=
+F19= | G19= | H19= | I19= | J19= | K19= | L19= | M19=
+F20= | G20= | H20= | I20= | J20= | K20= | L20= | M20=

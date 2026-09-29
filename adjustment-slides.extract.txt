@@ -1,0 +1,2681 @@
+
+### Adjustment Microservice Logic flow (5).pptx
+Adjustment Microservice Logic flow
+Adjustment by Dollar amount
+Future Enhancements
+Adjustment by Cubes, Seats, Qty
+Product Status Exclusion
+
+### Adjustment Microservice Logic flow (5).pptx
+True
+C1=Item Exclusion (continued)
+Z = End
+Check Product status on UI  for blank/null
+Check Product Status for equal
+Check Item on UI for blank
+Check Item for equal
+Get Product Status for Item
+C1
+Item Exclusion
+Z
+False
+False
+True
+True
+True
+False
+AA
+C
+False
+Z
+
+### Adjustment Microservice Logic flow (5).pptx
+Check Active Code = True
+Check Retro date – Current Date GE Retro date
+True
+True
+True
+Z
+D
+D= Customer Exclusion
+Z = End
+False
+Check order date from – order date GE order date from
+Check order date to – Order date LE order date to
+Set Total Surcharge to zero
+Set Return Status to 1
+No Adjustment Details are returned
+Z
+False
+Item Exclusion   (continued)
+D
+False
+False
+True
+C1
+
+### Adjustment Microservice Logic flow (5).pptx
+Check customer for equal
+Check customer
+shipto
+for equal
+Check warehouse for blank
+True
+True
+True
+True
+Z
+Z
+D1=Adjustment Customer Exclusion continued
+Z = End
+False
+False
+Check warehouse for equal
+Check Series for blank
+Check Series for equal
+Check Item for blank
+Check Item for equal
+Get series for Item
+D1
+False
+Adjustment Customer Exclusion
+Z
+False
+True
+Z
+False
+False
+True
+True
+True
+False
+AA
+D
+True
+Check Adjustment Header Type = ‘ALL’
+Z
+Z
+False
+False
+Z
+
+### Adjustment Microservice Logic flow (5).pptx
+Z = End
+Check active code = True
+Check Retro date – Current Date GE Retro date
+Check order date from – order date GE order date from
+Check order date to – Order date LE order date to
+Set Total Surcharge to zero
+Set Return Status to 1
+No Adjustment Details are returned
+Z
+Adjustment Customer Exclusion
+(continued)
+Z
+False
+True
+Z
+False
+False
+True
+True
+True
+False
+D1
+
+### Adjustment Microservice Logic flow (5).pptx
+Check customer for equal
+Check customer
+shipto
+for equal
+Check warehouse for blank
+True
+True
+True
+True
+Z
+Z
+A=Customer override
+Z = End
+False
+False
+Check warehouse for equal
+Check active code = True
+Check Retro date – Current Date GE Retro date
+Check order date from – order date GE order date from
+Check order date to – Order date LE order date to
+A
+False
+Adjustment Customer Inclusion
+Z
+False
+False
+True
+Z
+False
+False
+True
+True
+True
+False
+AA
+E
+
+### Adjustment Microservice Logic flow (5).pptx
+Return Adjustment Output  (End)
+Return Total surcharge
+Return Status
+Return Adjustment Details if applicable
+Z
+
+### Adjustment Microservice Logic flow (5).pptx
+Check Microservice switch for  ON
+A
+True
+A= Customer Override
+E=Customer Inclusion
+Z= End
+False
+Adjustment Switches (Start)
+Set Total Surcharge to zero
+Set Return Status to zero
+No Adjustment Details are returned
+Z
+Check Adjustment Header active code = true
+True
+False
+Check Adjustment Header Type = ‘ALL’
+True
+E
+False
+(customer)
+Set Total Surcharge to zero
+Set Return Status to 1
+No Adjustment Details are returned
+Z
+
+### Adjustment Microservice Logic flow (5).pptx
+Check customer for equal
+Check customer
+shipto
+for equal
+Check warehouse for blank
+True
+True
+True
+True
+Z
+B
+A1= Adjustment Customer Override Continued
+B = Adjustment Detail
+False
+False
+Check warehouse for equal
+Check series for blank
+Check Item for equal
+Check series for equal
+Check Item for blank
+A1
+False
+Adjustment Customer Override
+B
+False
+False
+True
+B
+False
+False
+True
+True
+True
+False
+AA
+A
+Get series for Item
+B
+
+### Adjustment Microservice Logic flow (5).pptx
+B = Adjustment Detail
+O= Override Adjustment Calculations
+Check active code = True
+Check Retro date – Current Date GE Retro date
+Check order date from – order date GE order date from
+Check order date to – Order date LE order date to
+O
+Adjustment Customer Override                           (continued)
+B
+False
+True
+B
+False
+False
+True
+True
+True
+False
+A1
+
+### Adjustment Microservice Logic flow (5).pptx
+Does Item class match Override record
+True
+Z
+B
+B   = Adjustment Detail
+O1= Override adjustment             Calculations(continued)
+False
+Override Adjustment  Calculations
+O
+Get Item Class for Item
+If Unit Type = ‘Price’
+False
+True
+True
+Unit each = (price/qty/)
+If Unit Type = ‘Seats’
+Retrieve cubes per unit from ITMEXT
+Unit each = cubes
+If Unit Type = ‘Cubes’
+If Unit Type = ‘Quantity’
+Unit each = 1
+False
+Unit type seats will only apply to upholstery
+Retrieve seats per unit from
+tblItemList
+Unit each = number of seats
+True
+False
+O1
+False
+True
+O1
+O1
+Unit Type is required
+
+### Adjustment Microservice Logic flow (5).pptx
+B=Adjustment Detail
+C= Item Exclusion
+Set Total Surcharge(Override)
+Set Return Status to 2
+Return Adjustment Details
+C
+Override Adjustment  Calculations (continued)
+O1
+If Calculation Type = ‘Percent’
+False
+Calculation:
+Surcharge each = Unit each * (calculation type value * .01)
+Surcharge each will be rounded UP
+as indicated on the adjustment
+The Adjustment Amount will be extended out for the return value
+Adjustment Amount = surcharge each * quantity
+True
+If Calculation Type =  ‘Dollar’
+Calculation:
+Surcharge each = Unit each * calculation type value
+Surcharge each will be rounded UP as indicated on the adjustment
+The Adjustment Amount will be extended out for the return value
+Adjustment Amount = surcharge each * quantity
+True
+Z
+B
+False
+
+### Adjustment Microservice Logic flow (5).pptx
+Check Item for matching Item class
+Check Active Code = True
+Check Retro date – Current Date GE Retro date
+True
+True
+True
+True
+Z
+Z
+S= Detail Adjustment Calculations
+Z = End
+False
+False
+Check order date from – order date GE order date from
+Check order date to – Order date LE order date to
+S
+False
+Adjustment Detail
+Z
+False
+False
+True
+B
+
+### Adjustment Microservice Logic flow (5).pptx
+Does Item class match Override record
+True
+Z
+S2
+S1= Adjustment Detail            Calculations(continued)
+S2= Adjustment Detail            Calculations(continued)
+False
+Adjustment Detail  Calculations
+S
+Get Item Class for Item
+If Unit Type = ‘Price’
+False
+True
+True
+Unit each = (price/qty/)
+If Unit Type = ‘Seats’
+Retrieve cubes per unit from ITMEXT
+Unit each = cubes
+If Unit Type = ‘Cubes’
+If Unit Type = ‘Quantity’
+Unit each = 1
+False
+Unit type seats will only apply to upholstery
+Retrieve seats per unit from
+tblItemList
+Unit each = number of seats
+True
+False
+S1
+False
+True
+S1
+S1
+Unit Type is required
+
+### Adjustment Microservice Logic flow (5).pptx
+Z
+Z
+C= Item Exclusion
+Z=End
+Set Total Surcharge(Detail)
+Set Return Status to 2
+Return Adjustment Details
+C
+Detail Adjustment  Calculations (continued)
+S1
+If Calculation Type = ‘Percent’
+False
+Calculation:
+Surcharge each = (price/quantity) * (calculation value * .01)
+Surcharge each will be rounded UP as
+indicated on the adjustment
+The Adjustment Amount will be extended out for the return value
+Adjustment Amount = surcharge each * quantity
+True
+Set Total Surcharge to zero
+Set Return Status to 1
+No Adjustment Details are returned
+If Calculation Type =  ‘Dollar’
+Calculation:
+Surcharge each = (price/quantity) * calculation type value
+Surcharge each will be rounded UP as indicated on the adjustment
+The Adjustment Amount will be extended out for the return value
+Adjustment Amount = surcharge each * quantity
+True
+False
+S2
+
+### Adjustment System Project Plan (2).pptx
+Import Surcharge Project
+*NOTE: This is a working document and
+WILL change as the project progresses.
+(Adjustment System)
+
+### Adjustment System Project Plan (2).pptx
+These rules will be applied to the Global Adjustment Maintenance UI.
+Adjustment Detail
+Pulling in item classes should be automated.
+Only “end item” item classes should be pulled in. (AS400 Table: AENDCLS)
+Is the data replicated to SQL? Do we need an API?
+User should be able to enter a default setting for calculation type, value, order from date, and order to date as the item classes are pulled in. User can modify after the fact.
+User should be able to set the default based on Import/Domestic, Product Line Code, Sales Category, Division Code, Retail Category, or Financial Division. (All defined in AENDCLS)
+There should be a
+control table
+containing all valid
+Calculation Types
+and the min/max values acceptable.
+It should only be maintainable by IT.
+For MVP, only one entry will be present.  Development in the microservice will be necessary before adding any future options.
+MVP: Calculation Type = “Percentage”; Minimum Value = 0; Maximum Value = ?;
+The UI will provide edit checks to support the min/max values.
+Calculation type can be maintained until the earliest “From” date has passed. Then the field should no longer be maintainable.
+Value can be maintained until the earliest “From” date has passed. Then the field should no longer be maintainable.
+There should be a
+control table
+containing the
+Time Fence
+in days.
+It should only be maintainable by IT. (start with 7 days in all 3 time fences)
+It should have a “From” time fence, a “To” time fence, and a “Recalculate” time fence
+Order From Date must be outside the “From” time fence. (It must be x days greater than the current date)
+The Order From Date is not maintainable once it is inside the “From” time fence. (Less than x days greater than the current date)
+Order To Date must be greater than the Order From Date and greater than the “To” time fence.
+This date is not maintainable once it is inside the “To” time fence. (It must be x days greater than the current date)
+If maintained, it must remain greater than the from date and outside the “To” time fence.
+Invoice From/To Date are not functional in MVP.
+They should be allowed to remain unset.
+If set, Invoice From/To should follow the same rules as order From/To date respecting time fences.
+Recalculate Date is not functional in MVP.
+If set, Recalculate Date must be outside the “Recalculate” time fence and greater than or equal to both the Order From Date and Invoice From Date if set.
+At record creation, the creation date/time/user should be updated and the last change date/time/user.
+Upon update, the last change date/time/user should be updated.
+Active Code: all records will be active upon creation.  They can be set to inactive by the user only if neither from date has passed. Once a from date has passed, the user can only maintain the to dates. Once the to dates have passed, then the record can be set to inactive if desired.
+Global Adjustment Maintenance Rules
+
+### Adjustment System Project Plan (2).pptx
+These rules will be applied to the Global Adjustment Maintenance UI.
+Adjustment Detail – Customer Override
+User should be able to set up a customer override for an adjustment
+The override will be for a customer/”ship to” combination.
+“ship to” will be blank for a “bill to”
+There will be two options for overriding
+The user can choose to “exclude” a customer/”ship to” from an adjustment
+This excludes the customer/”ship to” from the entire adjustment (all detail records)
+The user can choose to customize the detail settings for a customer/”ship to”
+This option will pull the detail settings for the given surcharge into the override table for the customer/”ship to” and allow the user to maintain the Calculation value and dates.
+ALL rules for the dates on the detail UI will also be enforced on the override UI.
+At record creation, the creation date/time/user should be updated and the last change date/time/user.
+Upon update, the last change date/time/user should be updated
+Active Code: all records will be active upon creation.  They can be set to inactive by the user only if neither from date has passed. Once a from date has passed, the user can only maintain the to dates. Once the to dates have passed, then the record can be set to inactive if desired.
+Global Adjustment Maintenance Rules
+
+### Adjustment System Project Plan (2).pptx
+Adjustment Tables
+Adjustment Header
+adjustment_id
+Unique identifier
+I
+0,1
+adjustment_name
+CRDNO || “ “ || CRDSC
+A
+35
+credit_code
+CRDNO
+A
+3
+calculation_level
+calc_id
+Connection to  control
+Int
+commissionable
+CRDCO
+B=INVOICE & CM
+I=INVOICE ONLY
+N=NEITHER
+A
+1
+taxable
+CRDSLSTX
+Y=yes
+N=no
+A
+1
+invoice_level
+CRDOPNFL1F
+1=line-item level 2=Order level
+A
+1
+refundable
+CRDOPNFL2F
+Y=yes
+N=no
+A
+1
+charge
+Boolean
+B
+active_code
+Boolean
+B
+creation_date_time
+creation_user
+Date/time stamp
+User id
+last_change_date_time
+last_change_user
+Date/time stamp
+User id
+Adjustment Detail
+adjustment_detail_id
+Unique identifier
+I
+0,1
+adjustment_id
+Connection to header
+Int
+level
+Ex: “ITEMCLASS”
+A
+25
+level_value
+Ex: “ZABC”
+A
+25
+calculation_type
+Ex: “PERCENT”
+A
+25
+calculation_value
+Ex: 2.0000
+P
+8
+4
+order_start_date
+8
+0
+order_end_date
+8
+0
+invoice_start_date
+8
+0
+invoice_end_date
+8
+0
+recalculate_date
+8
+0
+active_code
+Boolean
+B
+creation_date_time
+creation_user
+Date/time stamp
+User id
+last_change_date_time
+last_change_user
+Date/time stamp
+User id
+Adjustment Customer Override
+override_id
+Unique identifier
+I
+0,1
+adjustment_id
+Connection to header
+Int
+adjustment_detail_id
+Connection to detail
+Int
+customer_id
+P
+8
+0
+customer_ship_to
+A
+4
+override_type
+E=Exclude C=Custom
+A
+1
+calculation_type
+Ex: “PERCENT”
+A
+25
+calculation_value
+Ex: 2.0000
+P
+8
+4
+order_start_date
+8
+0
+order_end_date
+8
+0
+invoice_start_date
+8
+0
+invoice_end_date
+8
+0
+recalculate_date
+8
+0
+active_code
+Boolean
+B
+creation_date_time
+creation_user
+Date/time stamp
+User id
+last_change_date_time
+last_change_user
+Date/time stamp
+User id
+
+### Adjustment System Project Plan (2).pptx
+Time Fence Functionality
+Today
+First Available “From” Date
+“From” Time Fence
+Adjustment Creation & Maintenance
+“To” Time Fence
+First Available “To” Date
+“Recalculate” Time Fence
+First Available “Recalculate” Date
+Order From Date must be outside the “From” time fence. (It must be x days greater than the current date)
+The Order From Date is not maintainable once it is inside the “From” time fence. (Less than x days greater than the current date)
+The Order From Date is also not maintainable once the date is in the past.
+Order To Date must be greater than the Order From Date and greater than the “To” time fence.
+This date is not maintainable once it is inside the “To” time fence. (It must be x days greater than the current date)
+If maintained, it must remain greater than the from date and outside the “To” time fence.
+Invoice From/To Date are not functional in MVP.
+They should be allowed to remain unset.
+If set, Invoice From/To should follow the same rules as order From/To date respecting time fences.
+Recalculate Date is not functional in MVP.
+If set, Recalculate Date must be outside the “Recalculate” time fence and greater than or equal to both the Order From Date and Invoice From Date if set.
+Surcharge
+From: 1/1/2025
+To: 12/31/2025
+Time fence: x days
+
+### Adjustment System Project Plan (2).pptx
+Adjustment System
+Microservice
+
+### Adjustment System Project Plan (2).pptx
+Microservices, or microservices architecture, is a software development style that separates a large application into smaller, independent services.
+Each service is responsible for a single feature and has its own technology stack, including a database and data management model.
+The services communicate with each other using well-defined APIs, such as representational state transfer (REST), event streaming, and message brokers.
+Microservice Definition
+
+### Adjustment System Project Plan (2).pptx
+Adjustment Microservice MVP
+AshleyNET
+Adjustment
+Maintenance
+UI
+SQL Server
+Adjustment Master Data APIs
+2
+Existing Windows VM
+API Server(s)
+Private Data
+SQL Server
+2
+Data Sync APIs
+1
+Data Sync Trigger
+1
+All Processes Needing Adjustment Info
+Pre-Invoicing
+3
+DB2
+ACRDMAS
+API
+Calculation APIs
+3
+All Processes Needing Adjustment Info
+Pre-Invoicing
+3
+Product Data
+PIM
+Product Data API
+2
+Documentation
+Documentation
+
+### Adjustment System Project Plan (2).pptx
+Microservice Future Possibilities
+Equinix
+Azure Kubernetes Pod
+TBD
+Azure App Service
+(MVP)
+
+### Adjustment System Project Plan (2).pptx
+Microservice Logic
+Receive Parms
+Check Switch
+Status?
+Return level 0
+OFF
+Process Calculator for each order/item
+Retrieve product data for all Items
+Determine if any Item Class Adjustments
+Future Adjustment
+Future Adjustment
+<LOGIC>
+Return Adjustments
+Private Product Data
+Private Header Data
+Private Detail Data
+Private Override Data
+Private Data
+Local to Microservice
+
+### Adjustment System Project Plan (2).pptx
+Data Contract Hierarchy
+INBOUND
+{
+"orders": [
+{
+ORDER DETAIL
+"items": [
+{
+ITEM DETAIL
+},
+{
+I
+TEM DETAIL
+}
+]
+},
+{
+ORDER DETAIL
+"items": [
+{
+ITEM DETAIL
+},
+{
+ITEM DETAIL
+}
+]
+}
+],
+}
+{
+"orders": [
+{
+ORDER DETAIL
+“adjustments": [
+{
+ITEM DETAIL
+“
+adjustment_details
+": [
+{
+ADJUSTMENT DETAIL
+}
+{
+ADJUSTMENT DETAIL
+}
+{
+ITEM DETAIL
+“
+adjustment_details
+": [
+{
+ADJUSTMENT DETAIL
+}
+{
+ORDER DETAIL
+“adjustments": [
+{
+ITEM DETAIL
+“
+adjustment_details
+": [
+{
+ADJUSTMENT DETAIL
+}
+{
+ITEM DETAIL
+“
+adjustment_details
+": [
+{
+ADJUSTMENT DETAIL
+}
+]
+}
+]
+}
+]
+}
+OUTBOUND
+See documentation for most current JSON layout.
+LINK
+
+### Adjustment System Project Plan (2).pptx
+Issue
+Issue:
+Global container shipping rates are drastically increasing in response to approximately 30% of the global container shipping capacity being taken off-line.
+Opportunity:
+Need to add an Import Surcharge to imported products to offset the additional costs. If nothing is done the impact of the increased container costs will continue to impact profits.
+Objective:
+Create a solution that enables a surcharge to be applied to invoices with maximum visibility and flexibility to both new orders and open orders.
+​
+Cost avoidance :
+$104M/year
+
+### Adjustment System Project Plan (2).pptx
+Inbound JSON Data Contract
+{
+"orders": [
+{
+"
+order_id
+": "ORD-001",
+"
+customer_id
+": 8888300,
+"
+ship_to
+": "480",
+"
+order_date
+": "2024-06-27T10:30:00Z",
+"
+est_ship_date
+": "2024-06-30T14:00:00Z",
+"
+invoice_date
+": "2024-06-28T09:00:00Z",
+"
+warehouse_id
+": "WH-005",
+"items": [
+{
+"
+item_id
+": "ITEM-A",
+"quantity": 2,
+"price": 29.99
+},
+{
+"
+item_id
+": "ITEM-B",
+"quantity": 1,
+"price": 49.99
+}
+]
+},
+{
+"
+order_id
+": "ORD-002",
+"
+customer_id
+": "8888300",
+"
+ship_to
+": "480",
+"
+order_date
+": "2024-06-27T11:45:00Z",
+"
+est_ship_date
+": "2024-07-01T10:00:00Z",
+"
+invoice_date
+": "2024-06-28T15:30:00Z",
+"
+warehouse_id
+": "WH-003",
+"items": [
+{
+"
+item_id
+": "ITEM-C",
+"quantity": 3,
+"price": 19.99
+}
+]
+}
+],
+}
+*
+Green
+= Optional
+Allows for multiple orders
+{
+"orders": [
+{
+"
+order_id
+": “string", - Optional
+"
+customer_id
+": number,
+"
+ship_to
+": “string", (blank for a bill to)
+"
+order_date
+": “string(ISO 8601 format)",
+"
+est_ship_date
+": “string(ISO 8601 format)", - Optional
+"
+invoice_date
+": “string(ISO 8601 format)", - Optional
+"
+warehouse_id
+": “string", - Optional
+"items": [
+{
+"
+item_id
+": “string",
+"quantity": number, - Optional
+"price": number
+},
+{
+"
+item_id
+": “string",
+"quantity": number, - Optional
+(returns for a qty of 1 unless provided)
+"price": number
+}
+]
+},
+{
+"
+order_id
+": “string", - Optional
+"
+customer_id
+": “string",
+"
+ship_to
+": “string", (blank for a bill to)
+"
+order_date
+": “string(ISO 8601 format)",
+"
+est_ship_date
+": “string(ISO 8601 format)", - Optional
+"
+invoice_date
+": “string(ISO 8601 format)", - Optional
+"
+warehouse_id
+": “string", - Optional
+"items": [
+{
+"
+item_id
+": “string",
+"quantity": number, - Optional
+(returns for a qty of 1 unless provided)
+"price": “number”
+}
+]
+}
+],
+}
+Example:
+See documentation for most current JSON layout.
+LINK
+
+### Adjustment System Project Plan (2).pptx
+Outbound JSON Data Contract
+{
+"orders": [
+{
+"
+order_id
+": "ORD-001",
+"
+customer_id
+": 8888300,
+"
+ship_to
+": "480",
+"
+total_surcharge
+": 13.49,
+“adjustments": [
+{
+"
+item_id
+": "ITEM-A",
+“status”: “
+2”,
+“
+adjustment_details
+": [
+{
+“
+credit_code
+”: “HDF”
+“
+adjustment_name
+": “HDF Handling Fee",
+“
+adjustment_amount
+": 5,
+“
+invoice_level
+":
+"
+1
+"
+,
+"taxable": “N”,
+"commissionable": “N”,
+"quantity": 2,
+“
+calculation_value
+": 8.33,
+“
+calculation_type
+": “Percent”,
+"
+applied_level
+": "ITEM CLASS",
+“
+applied_level_value
+": "CLASS-A“,
+“charge”: true
+}
+]
+},
+{
+"
+item_id
+": "ITEM-B",
+“status”:
+2,
+“
+adjustment_details
+": [
+{
+“
+credit_code
+”: “OIF”
+“
+adjustment_name
+": “OIF Oversize Item Fee",
+“
+adjustment_amount
+": 8.49,
+“
+invoice_level
+":
+“2",
+"taxable": “N”,
+"commissionable":
+“N”
+,
+"quantity": 1,
+“
+calculation_value
+": 17,
+“
+calculation_type
+": “Percent”,
+"
+applied_level
+": "ITEM CLASS",
+“
+applied_level_value
+": "CLASS-B“,
+“charge”: true
+}
+]
+}
+]
+},
+]
+}
+*
+Green
+= Optional
+Allows for multiple orders, multiple items, multiple adjustments per item.
+{
+"orders": [
+{
+"
+order_id
+": "string",
+"
+customer_id
+": number,
+"
+ship_to
+": "string",
+"
+total_surcharge
+":
+number
+,
+“adjustments": [
+{
+"
+item_id
+": "string",
+“
+status”:”string
+”
+0=API OFF, 1=NONE APPLIED, 2=APPLIED,
+“
+adjustment_details
+": [
+{
+“
+credit_code
+”: “string”,
+“
+adjustment_name
+": "string",
+“
+adjustment_amount
+": number
+,
+“
+invoice_level
+":
+"string",
+"taxable": “string",
+"commissionable":
+“string”,
+"quantity": number
+,
+“
+calculation
+_value
+": number
+,
+“
+calculation_type
+": “string",
+"
+applied_level
+": "string",
+“
+applied_
+level
+_value
+": "string”,
+“charge”: Boolean
+}
+]
+}
+]
+}
+]
+}
+Example:
+See documentation for most current JSON layout.
+LINK
+
+### Adjustment System Project Plan (2).pptx
+Outbound Stub Result
+*
+Green
+= Optional
+If the switch is
+on
+, this is the return
+{
+"orders": [
+{
+"
+order_id
+": whatever is passed in,
+"
+customer_id
+": whatever is passed in,
+"
+ship_to
+": whatever is passed in,
+"
+total_surcharge
+":
+5
+,
+“adjustments": [
+{
+"
+item_id
+": whatever is passed in,
+“status”:
+“
+2”
+,
+“
+adjustment_details
+": [
+{
+“
+credit_code
+”:
+“IMP”
+“
+adjustment_name
+":
+“IMP IMPORT SURCHARGE",
+“
+adjustment_amount
+":
+1
+,
+“
+invoice_level
+":
+“1"
+,
+"taxable":
+“
+N
+"
+,
+"commissionable":
+“
+N”
+,
+"quantity": whatever is passed in or
+1
+,
+“
+calculation
+_value
+":
+1
+,
+“
+calculation_type
+":
+“
+PERCENT
+",
+"
+applied_level
+":
+“ITEMCLASS",
+“
+applied_
+level
+_value
+":
+“CLASS_A”,
+“charge”:
+true
+}
+]
+}
+]
+}
+]
+}
+If the switch is
+off
+, this is the return
+{
+"orders": [
+{
+"
+order_id
+": whatever is passed in,
+"
+customer_id
+": whatever is passed in,
+"
+ship_to
+": whatever is passed in,
+"
+total_surcharge
+":
+0
+,
+“adjustments": [
+{
+"
+item_id
+": whatever is passed in,
+“status”: “
+0”
+,
+“
+adjustment_details
+":
+[
+]
+}
+]
+}
+]
+}
+LWise@Ashleyfurni
+... - Ashley Fur...
+Microservice Outbound – Order Level
+Order ID
+Input value
+A
+7
+Customer ID
+Input value
+P
+8
+0
+Ship To
+Input value
+A
+4
+Total Surcharge
+Stub: 5
+P
+13
+2
+Microservice Outbound – Adjustment Level
+Item ID
+Input value
+A
+15
+Status
+Stub: “2”
+A
+1
+Microservice Outbound – Adjustment Details
+credit_code
+Stub: “IMP”
+A
+3
+adjustment_name
+Stub: “IMP IMPORT SURCHARGE”
+A
+35
+Adjustment amount
+Stub: 1
+P
+13
+2
+invoice_level
+Stub: “1”
+A
+1
+taxable
+Stub: “N”
+A
+1
+commissionable
+Stub: “N”
+A
+1
+Quantity
+Stub: Input value or 1
+P
+10
+3
+calculation_value
+Stub: 1
+P
+8
+4
+calculation_type
+Stub: “PERCENT”
+A
+25
+applied_level
+Stub: “ITEMCLASS”
+A
+25
+applied_level_value
+Stub: “CLASS_A”
+A
+25
+charge
+Stub: true
+B
+See documentation for most current JSON layout.
+LINK
+
+### Adjustment System Project Plan (2).pptx
+Adjustment Microservice SOP
+Inbound
+Order Level (one per order)
+Order ID: optional
+MVP: not used
+Future: could be used to gather order level detail
+Customer: required
+Ship To: required. Blank for bill to level.
+Order Date: required. Impacts the adjustment decision.
+Estimated ship to: Optional
+MVP: not used
+Future: possible implications
+Invoice Date: Optional
+MVP: not used
+Future: possible implications
+Warehouse ID: Optional
+MVP: not used
+Future: possible implications
+Item Level (one per item on this order)
+Item ID: required
+Quantity: optional
+Quantity of 1 will be assumed if not provided
+Price: Required
+MVP: used to calculate adjustment
+Should be the total price for the quantity given
+No unit of measure necessary.
+Outbound
+Order Level (one per order submitted)
+Order ID: optional. Same as Inbound
+Customer ID: Same as Inbound
+Ship To: Same as Inbound
+Total Surcharge: Summary total surcharge amounts for this order
+Adjustments Level (one per item submitted this order)
+Item ID: Same as Inbound
+Status: (Alpha 1) 0=API OFF, 1=NONE APPLIED, 2=APPLIED
+If 0 or 1, no adjustment details will be sent for this item
+Adjustment Details (can be multiple per item)
+Credit Code: Credit Code associated with the adjustment
+Adjustment Name: Name of adjustment being applied
+Adjustment Amount: dollar amount of this adjustment for quantity given
+Invoice level: (Alpha 1) 1=line-item level, 2=Order level
+Taxable: (Alpha 1) B=INV& CM; I=INV ONLY; N=NEITHER
+Commissionable: (Alpha 1) Y=yes; N=no
+Quantity: Same as Inbound if given or 1
+Calculation value: number value used in calculation
+Calculation type: type of calculation performed
+Applied level: attribute used to qualify for adjustment
+Applied Level value: attribute value
+Charge: (Boolean) true or false
+True = this is a charge that will increase the invoice amount
+False = this is a credit that will decrease the invoice amount
+See documentation for most current JSON layout.
+LINK
+
+### Adjustment System Project Plan (2).pptx
+Adjustment Calculation
+Inbound
+Item ID: ITEMABC
+Quantity: 10
+Price: $442.50
+Surcharge Example
+Calculation Type: PERCENT
+Calculation Value: 6%
+Calculation
+Calculate the each $ amount
+$442.50 / 10 = $44.25 each
+Note: if no quantity passed the assume 1.
+Calculate the each $ surcharge
+$44.25 * 6% = $2.66 surcharge
+Round up to next dollar
+$3.00 surcharge each
+Multiply rounded surcharge by the quantity to get Adjustment Amount to return.
+$3.00 * 10 = $30 total surcharge
+Return the total surcharge to the caller
+Adjustment Amount = $30
+
+### Adjustment System Project Plan (2).pptx
+Adjustment Microservice Scenarios
+Item Level Calculated
+Item Level Displayed
+Invoice level: 1=line-item level
+Adjustment calculated item by item
+JSON Outbound: Item by item
+Print/Display: item by item
+Most will also summarize at the bottom
+Order Level Calculated
+Order Level Displayed
+Invoice level: 2=Order level
+Adjustment calculated item by item
+JSON Outbound: Item by item
+Print/Display: total at bottom of invoice
+Item Level Calculated
+Order Level Displayed
+NOTE:
+Outside the scope of the MVP
+Adjustment calculated for the order
+JSON Outbound: on order level (
+json
+example below)
+Print/Display: total at bottom of invoice
+
+### Adjustment System Project Plan (2).pptx
+Private Data Sync Logic
+Private Product Data
+Private Header Data
+Private Detail Data
+Private Override Data
+Private Data
+Local to Microservice
+Data Sync Initiation =
+Daily Scheduled Job
+API List
+w/destination table & Last Call Date
+Retrieve
+Entries & update with current date/time
+Call APIs with Last Call Date
+PIM
+Product Data
+PIM
+PIM API
+Gather changed Data
+Header API
+Gather changed Data & Update Private Data
+Detail API
+Gather changed Data & Update Private Data
+Override API
+Gather changed Data & Update Private Data
+UI Header Data
+UI Detail Data
+UI Override Data
+AshleyNET
+PIM API
+Gather changed Data & Update Private Data
+
+### Adjustment System Project Plan (2).pptx
+Microservice Data Sync Process Initiation
+There will be a daily scheduled job to call the Microservice Data Sync APIs.
+There will be one parameter: last call date/time
+The APIs calls should be in a control table to allow additions for every new instance of the Microservice.
+A control table will hold the following information:
+API URL
+One for each API to be called. MVP: there will be 4
+Last Call date of this API
+The current contents of the record will be passed as the parm.
+The date will be updated to the current date/time after pulled for the parm but before the actual call to insure there is no gap in updates.
+Destination table location
+(future: the same API can be called to sync multiple destinations.)
+
+### Adjustment System Project Plan (2).pptx
+Microservice Private Data Sync APIs
+The microservice data sync APIs will be located along side the microservice API.
+There will be 3 Adjustment APIs: Header, Detail, Override
+Each API will receive the last run parm.
+Each API will call its respective counterpart in AshleyNET passing the last run parm.
+The return data set will be all
+changed
+records for the respective table since the last run date/time.
+The API will then sync (update/add) the data set returned with the respective private data table.
+Note that calls to the microservice will be ongoing so there can be no outage of data.
+Finally, the API should remove all records flagged as inactive.
+There will be a Product Data Sync API to sync Product Data into the private data
+The API will receive the last run parm.
+The API will call the PIM Product Data API in the PIM system with the last run date to retrieve changes since the last run date.
+Include Item List = True
+Multiple Environment Item List = True
+The API will update the private data with changes.
+
+### Adjustment System Project Plan (2).pptx
+Adjustment Maintenance Data APIs
+The Adjustment Maintenance Data APIs will be located in AshleyNET.
+There will be three APIs: Header, Detail, Override
+Each API will receive the last run parm.
+Each API will review the data for that table and return the records which have a last update date/time greater than or equal to the last run date/time parm.
+
+### Adjustment System Project Plan (2).pptx
+Adjustment System
+MVP
+Surcharge to be managed at global level. Global setting can be overridden at Customer level.
+The surcharge “Import Surcharge” will be enabled by “Item Class”.
+Item Classes that the surcharge applies too will be added to a new surcharge table.
+Each Item Class will carry its own x% surcharge and effectivity dates.
+Surcharges to be set with effectivity dates based on order date.
+Allow for customer exceptions: exclusions or a different %.
+Invoice Calculation will be by line-item if Item Class applies with totals to follow.
+Example: Price
+(for 1)
+* % Surcharge
+The surcharge will be
+rounded up to
+the nearest $.
+If a quantity is passed, the surcharge amount will be extended.
+Surcharge will be recalculated on the fly until point of shipment/invoicing.
+Surcharge will be non-commissionable and non-taxable.
+Machine to machine communication: roll surcharge into line-item price.
+Human readable: line-item price and surcharge will be separate.
+
+### Adjustment System Project Plan (2).pptx
+PIM Product Data API
+This API already exists in the PIM system.
+Here is the link to the Product Data API schema. (from Igor Karam)
+http://plmapi.ashleyfurniture.com/Ashley.ProductData.Maintenance.Service/Services/ProductDataMaintenanceService.svc/productdownload/help/operations/LoadProductDownloadByListOfItemNumbers
+It can be called in multiple ways:
+with a list of items.
+with a last changed date.
+(method to be called by the daily sync process)
+Etc.
+To retrieve the data we need, it should be called with:
+Include Item List = True
+Multiple Environment Item List = True
+Take the data returned an update the Microservice Private Data table
+NOTE: we will need to do a one-time initial load of items to the private data. Suggested to load all items that appear in a price list.
+
+### Adjustment System Project Plan (2).pptx
+Product Data API
+Below is the VB code to do a test call by changed date.  Let me know if you have any questions. (from Joe Waldrop)
+Imports
+System.Globalization
+Imports
+System.ServiceModel
+Imports
+ProductDataServiceTestVB.ServiceProxy
+Imports
+Ashley.Engineering.CommonObjects
+Public Class Form2
+Private Sub Form2_Load(sender As Object, e As
+EventArgs
+) Handles
+Me.Load
+Dim Request As ProductDataServiceTestVB.ServiceProxy.LoadProductDownloadChangesAfterSpecifiedDateTimeRequest
+Dim Response As ProductDataServiceTestVB.ServiceProxy.LoadProductDownloadChangesAfterSpecifiedDateTimeResponse
+Dim
+ServiceClient
+As New
+ServiceProxy.ProductDownloadServiceClient
+Dim Items() As Item
+Dim
+MultiEnvironmentItems
+() As
+MultiEnvironmentItem
+Dim
+basicHttpBinding
+As
+BasicHttpBinding
+= New
+BasicHttpBinding
+()
+Try
+'setup
+basicHttpBinding.MaxReceivedMessageSize
+= 6553600
+ServiceClient.Endpoint.Binding
+=
+basicHttpBinding
+Request = New ServiceProxy.LoadProductDownloadChangesAfterSpecifiedDateTimeRequest()
+'Set the request properties
+Request.ClientCulture
+=
+CultureInfo.CurrentCulture.Name
+Request.UserName
+=
+Environment.UserName
+Request.MachineName
+=
+Environment.MachineName
+Request.StartDateTime
+= "8/4/2024 11:46:00 PM"
+Request.RequestOptions
+= New
+ProductDownloadRequestOptions
+With {
+.
+IncludeItemList
+= True,
+.
+IncludeMultiEnvironmentItemList
+= True
+}
+'call service
+Response =
+ServiceClient.LoadProductDownloadChangesAfterSpecifiedDateTime
+(Request)
+Items =
+Response.ItemList
+MultiEnvironmentItems
+=
+Response.MultiEnvironmentItemList
+Catch ex As Exception
+'Error handling
+Throw
+Finally
+'Change cursor
+Cursor.Current
+= Cursor
+End Try
+End Sub
+
+### Adjustment System Project Plan (2).pptx
+Invoicing /
+Shipped History
+
+### Adjustment System Project Plan (2).pptx
+Invoicing
+Existing Windows VM
+API Server(s)
+Calculation APIs
+SQL Server
+(Instance TBD)
+3
+Invoicing
+3
+DB2
+Shipped History
+TSSCIN Special Charges
+(NEW)
+Adjustment Line-Item Detail
+All Processes Needing Adjustment Info
+POST-Invoicing
+4
+Populate Shipped History & New Adjustment Table
+Invoice
+IWS API
+4
+
+### Adjustment System Project Plan (2).pptx
+Name
+Keys
+Type Len
+Description
+notes
+SCINVR
+K1
+P     9  0
+Invoice Number
+links to special charge
+SCORNO
+K2
+A     7
+Order Number
+links to special charge
+SCSQNO
+K3
+S     3  0
+Special Charge sequence number
+links to special charge
+SCCRCD
+A     3
+Credit Code
+Surcharge Code
+ITITNO
+K4
+A    15
+Item Number
+Links to order line item
+ITITSQ
+K5
+P     7  0
+Item Sequence No
+Links to order line item
+A    30
+Adjustment Description
+global header
+P    13  2
+Adjustment Amount
+calculated amount for this item
+A   1
+invoice level
+level of invoice to be applied
+A  25
+calculation type
+percent, flat rate, etc
+P     8, 4
+calculation value
+value of type to be applied
+A  25
+adjustment level
+ex: Item Class
+A  25
+adjustment level value
+ex: ZABC
+Shipped History
+Special Charge Info File
+(
+summary
+: bottom of invoice)
+Special Charge Line-Item
+Detail
+File: TSSCXN          Lib: ASHLEY
+< Detail
+Shipped History
+Invoice Level: 1=line-item level, 2=Order level
+
+### Adjustment System Project Plan (2).pptx
+Business approved invoice format including surcharge
+LINK
+
+### Adjustment System Project Plan (2).pptx
+Assignments
+
+### Adjustment System Project Plan (2).pptx
+Finance Teams Assignments
+IT FIN Pricing Team
+AS400 API over ACRDMAS
+To retrieve the credit code to drive the adjustment global master data.
+See Global Adjustment Header slide
+Microservice
+Stub out where it can be called and return the same answer every time - Damo
+Create new servers - created
+Create a switch table where the switch value will be stored
+Implement the switch in the stub out to allow PROD deploy
+Create microservice tables in close proximity to the microservice
+Header, Detail, Customer Override, Product Data
+Near data sync to microservice
+product data
+Microservice
+Write surcharge logic for MVP
+Will respect the active switch
+Adjustment System UI (AshleyNET)
+Create Control Tables
+Control Table: Calculation Levels (Item Class,
+etc
+)
+Control Table: Invoice Levels
+Control Table: Time Fence
+Control Table: Calculation Types (Percentage,
+etc
+)
+Create UI tables in AshleyNET
+Header, Detail, Customer Override
+Create UI(s)
+Header, Detail, Customer Override
+Near real time data sync to microservice
+header, detail, override
+IT FIN Accounting Team
+Create control switch: ability to turn on/off the call to the microservice for ALL AS400 Applications. New table. – MJ/Bindhu
+Create a procedure to be called to determine if the microservice call should be made or not (on/off) – MJ/
+Bindhu
+Create new TSSCIN extension table to hold surcharge detail information.
+File: TSSCXN Special Charge Line-Item Detail
+–
+SK/
+Bindhu
+Change option 1079 ACRDMAS maintenance to allow update of two user
+defined fields. Invoice Level = CRDOPNFL1F; refundable = CRDOPNFL2F – MJ/
+Bindhu
+Change Invoicing process
+CS254D
+to call microservice to pull any surcharges. Store surcharge detail information in new table and summary in TSSCIN. –
+SK
+/MJ
+Replicated new table TSSCXN to AshleyDirect (work with Bob Horton) – MJ
+Change AshleyDirect to show invoice line-item adjustments
+Change all finance programs that display invoice detail to show the line-item surcharge separate from the price on a line-item level. (these do not call the microservice) Including: - MJ/SK
+TSSCIN programs (35)
+Cost accounting cube
+Item count report
+credits
+
+### Adjustment System Project Plan (2).pptx
+Data Path
+ACRDMAS
+Adjustment Header
+adjustment_id
+Unique identifier
+I
+0,1
+adjustment_name
+CRDNO || “ “ || CRDSC
+A
+35
+credit_code
+CRDNO
+A
+3
+calculation_level
+calc_id
+From control
+commissionable
+CRDCO
+B=INVOICE & CM
+I=INVOICE ONLY
+N=NEITHER
+A
+1
+taxable
+CRDSLSTX
+Y=yes
+N=no
+A
+1
+invoice_level
+CRDOPNFL1F
+1=line-item level 2=Order level
+A
+1
+refundable
+CRDOPNFL2F
+Y=yes
+N=no
+A
+1
+charge
+Boolean
+B
+active_code
+Boolean
+B
+creation_date_time
+creation_user
+Date/time stamp
+User id
+last_change_date_time
+last_change_user
+Date/time stamp
+User id
+LWise@Ashleyfurni
+... - Ashley Fur...
+API
+Adjustment Detail
+adjustment_detail_id
+Unique identifier
+I
+0,1
+adjustment_id
+Connection to header
+Int
+level
+Ex: “
+ItemClass
+”
+A
+25
+level_value
+Ex: “ZABC”
+A
+25
+calculation_type
+Ex: “Percent”
+A
+25
+calculation_value
+Ex: 2.0000
+P
+8
+4
+order_start_date
+8
+0
+order_end_date
+8
+0
+invoice_start_date
+8
+0
+invoice_end_date
+8
+0
+recalculate_date
+8
+0
+active_code
+Boolean
+B
+creation_date_time
+creation_user
+Date/time stamp
+User id
+last_change_date_time
+last_change_user
+Date/time stamp
+User id
+Adjustment Customer Override
+override_id
+Unique identifier
+I
+0,1
+adjustment_id
+Connection to header
+Int
+adjustment_detail_id
+Connection to detail
+Int
+customer_id
+P
+8
+0
+customer_ship_to
+A
+4
+override_type
+E=Exclude C=Custom
+A
+1
+calculation_type
+Ex: “Percent”
+A
+25
+calculation_value
+Ex: 2.0000
+P
+8
+4
+order_start_date
+8
+0
+order_end_date
+8
+0
+invoice_start_date
+8
+0
+invoice_end_date
+8
+0
+recalculate_date
+8
+0
+active_code
+Boolean
+B
+creation_date_time
+creation_user
+Date/time stamp
+User id
+last_change_date_time
+last_change_user
+Date/time stamp
+User id
+Adjustment UI
+CRDVLLST
+Identity fields in AshleyNET will be represented as Integers in the Microservice Private Data
+
+### Adjustment System Project Plan (2).pptx
+Data Path
+LWise@Ashleyfurni... - Ashley Fur...
+Microservice
+Microservice Outbound – Order Level
+Order ID
+Input
+A
+7
+Customer ID
+Input
+P
+8
+0
+Ship To
+input
+A
+4
+Total Surcharge
+Sum of all surcharges for this order id
+P
+13
+2
+Microservice Outbound – Adjustment Level
+Item ID
+Item number
+A
+15
+Status
+0=API OFF
+1=NONE APPLIED
+2=APPLIED
+A
+1
+Microservice Outbound – Adjustment Details
+credit_code
+CRDNO
+A
+3
+adjustment_name
+CRDNO || “ “ || CRDSC
+A
+35
+Adjustment amount
+calculated
+P
+13
+2
+invoice_level
+CRDOPNFL1F
+A
+1
+taxable
+CRDSLSTX
+A
+1
+commissionable
+CRDCO
+A
+1
+Quantity
+Input or 1
+P
+10
+3
+calculation_value
+Ex: 2.0000
+P
+8
+4
+calculation_type
+Ex: “Percent”
+A
+25
+applied_level
+Ex: “
+ItemClass
+”
+A
+25
+applied_level_value
+Ex: “ZABC”
+A
+25
+charge
+Boolean
+B
+
+### Adjustment System Project Plan (2).pptx
+Adjustment System -
+Future
+Surcharge to be managed at global level. Global setting can be overridden at Customer level.
+The surcharge (Name: “Import Surcharge”) will be enabled by “Item Class”.
+Future:
+adjustments can have other levels.
+Ex: Sales Class, Warehouse, Item, etc.
+Item Classes that the surcharge applies too will be added to a new surcharge table.
+Future: we will have the ability to have a primary level and secondary level to allow more flexibility
+Each Item Class will carry its own x% surcharge and effectivity dates.
+Future: will have the flexibility to have other types in the future. (Ex. flat rate, cube, weight, etc.
+Surcharges to be set with effectivity dates and as of order date.
+Future: want flexibility to also utilize invoice date in the future.
+Future: Also want the ability in the future to define a recalculate date for open orders.
+Allow for customer exceptions: exclusions or a different %.
+Future: all the same flexibility as the standard
+Invoice Calculation will be by line-item if Item Class applies with totals to follow.
+Example: Price (for 1) * % Surcharge
+Future: allow line-item level or order level surcharges.
+The surcharge will be
+rounded
+up
+to the nearest $.
+If a quantity is passed, the surcharge amount will be extended.
+Surcharge will be recalculated on the fly until point of shipment/invoicing.
+Surcharge will be non-commissionable and non-taxable.
+Future: allow option to pay commission and charge taxes.  Also, refundable functionality.
+Machine to machine communication: roll surcharge into line-item price.
+Future: can work with customers for joint development to separate.
+Human readable: line-item price and surcharge will be separate.
+Import Surcharge is only one use of this.
+Future: because of the added flexibility, we want to call this an “Adjustment” rather than a “Surcharge”
+
+### Adjustment System Project Plan (2).pptx
+Data Path
+TSSCXN
+LWise@Ashleyfurni... - Ashley Fur...
+Microservice Outbound – Order Level
+Order ID
+A
+7
+Customer ID
+P
+8
+0
+Ship To
+A
+4
+Total Surcharge
+Sum of all surcharges for this order id
+P
+13
+2
+Microservice Outbound – Adjustment Level
+Item ID
+Item number
+A
+15
+Status
+0=API OFF
+1=NONE APPLIED
+2=APPLIED
+A
+1
+Microservice Outbound – Adjustment Details
+credit_code
+CRDNO
+A
+3
+adjustment_name
+CRDNO || “ “ || CRDSC
+A
+35
+Adjustment amount
+calculated
+P
+13
+2
+invoice_level
+CRDOPNFL1F
+A
+1
+taxable
+CRDSLSTX
+A
+1
+commissionable
+CRDCO
+A
+1
+Quantity
+Input or 1
+P
+10
+3
+calculation_value
+Ex: 2.0000
+P
+8
+4
+calculation_type
+Ex: “Percent”
+A
+25
+applied_level
+Ex: “
+ItemClass
+”
+A
+25
+applied_level_value
+Ex: “ZABC”
+A
+25
+charge
+Boolean
+B
+Microservice
+
+### Adjustment System Project Plan (2).pptx
+HJ
+Ship the order
+Order
+Mgmt
+Release for Invoicing
+Calc freight/surcharge
+CS254D2
+Trip Files
+Finance
+Auto Invoicing
+Shipped History
+Nightly Job
+Infor XA
+Assign u/n based on COM rules
+IFM
+1446
+Credit Code /
+Special Charge Code
+INSCCD
+1079
+Credit Code
+ACRDMAS
+COM Rules
+Special Charge Code
+By item class
+Drives u/n
+Surcharge Microservice
+
+### Adjustment System Project Plan (2).pptx
+ARCHIVES
+
+### Adjustment System Project Plan (2).pptx
+EXAMPLEs
+IMPORT SURCHARGE                                                                                              $XXX.00
+Add Surcharge to
+line-item level
+With summary line
+Needs to reflect Surcharge
+EDI Roll into price
+For MVP
+OLD
+
+### Adjustment System Project Plan (2).pptx
+Microservice Logic
+Receive Parms
+Check Switch
+Status?
+Return level 0
+OFF
+Process Calculator for each order/item
+ON
+Call Product API to retrieve all Item Information
+Determine if any Item Class Adjustments
+Future Adjustment
+Future Adjustment
+<LOGIC>
+Return Adjustments
+Done
+YES
+Reference Cache
+Cached?
+YES
+NO
+Cache Adjustments based on quantity of 1
+Use Cached info
+*Number of hours for cache should be stored in a control table where it can be easily adjusted. (start with 24)
+**Cache will be held for order/customer/ship to/order date/ship date/invoice date/warehouse/item/price for x hours.  All output parameter detail will be held for quantity of 1.
+Status, adjustment name, adjustment amount, invoice level, taxable, commissionable, quantity=1, calculation value, calculation type, applied level, applied level value, charge.
+If the caller passes a quantity other than one, simply multiply the adjustment amount by that quantity for the return adjustment amount.
+Cache
+Order, Cust, ShipTo, Order Date, Ship Date, Invoice Date,
+Whs
+, Item, Price, Adjustment Info
+*
+**
+OLD
+
+### Adjustment System Project Plan (2).pptx
+Adjustment System
+User Interface
+
+### Adjustment System Project Plan (2).pptx
+Global Adjustment Header
+ID
+Description
+100
+XXXX Surcharge
+Primary Level
+Item Class
+Secondary Level
+none
+Creation Date
+6/26/2024 8:30pm
+Invoice Level
+Line Item
+Refundable
+Commissionable
+Taxable
+X
+Charge
+Credit Code Master Table
+Global Adjustment Header Table (AshleyNET)
+ACRDMAS
+Adjustment Header
+adjustment_id
+Unique identifier
+I
+adjustment_name
+CRDNO || “ “ || CRDSC
+A
+35
+credit_code
+CRDNO
+A
+3
+calculation_level
+calc_id
+From control
+Int
+commissionable
+CRDCO
+B=INVOICE & CM
+I=INVOICE ONLY
+N=NEITHER
+A
+1
+taxable
+CRDSLSTX
+Y=yes
+N=no
+A
+1
+invoice_level
+CRDOPNFL1F
+1=line-item level 2=Order level
+A
+1
+refundable
+CRDOPNFL2F
+Y=yes
+N=no
+A
+1
+charge
+Boolean
+B
+active_code
+Boolean
+B
+creation_date_time
+creation_user
+Date/time stamp
+User id
+last_change_date_time
+last_change_user
+Date/time stamp
+User id
+API
+
+### Adjustment System Project Plan (2).pptx
+ID
+Adjustment
+Value
+100
+100 XXXX Surcharge
+CLASS_A
+Calculation
+Level
+Item Class
+101
+100 XXXX Surcharge
+CLASS_B
+Item Class
+102
+100 XXXX Surcharge
+CLASS_C
+Item Class
+103
+100 XXXX Surcharge
+ITEM_A
+Item
+Global Adjustment Detail
+Value
+Order Date
+From
+Order Date
+To
+Invoice Date
+From
+Invoice Date
+To
+Recalculate Date
+5.00
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+4.00
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+4.50
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+4.00
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+Calculation Type
+Per Cent
+Per Cent
+Per Cent
+Per Cent
+Global Adjustment Header
+ID
+Description
+100
+XXXX Surcharge
+Primary Level
+Item Class
+Secondary Level
+none
+Creation Date
+6/26/2024 8:30pm
+Invoice Level
+Line Item
+Refundable
+Commissionable
+Taxable
+X
+Charge
+
+### Adjustment System Project Plan (2).pptx
+Adjustment Detail Customer Override
+ID
+Adjustment
+Value
+100
+100 XXXX Surcharge
+CLASS_A
+Calculation
+Level
+Item Class
+Value
+Order Date
+From
+Order Date
+To
+Invoice Date
+From
+Invoice Date
+To
+Recalculate Date
+4.00
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+Calculation Type
+Per Cent
+101
+100 XXXX Surcharge
+CLASS_B
+Item Class
+102
+100 XXXX Surcharge
+CLASS_C
+Item Class
+103
+100 XXXX Surcharge
+ITEM_A
+Item
+3.00
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+3.50
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+3.00
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+Per Cent
+Per Cent
+Per Cent
+Customer:
+CUSTOMER_A
+Ship To:
+01
+Global Adjustment Header
+ID
+Description
+100
+XXXX Surcharge
+Primary Level
+Item Class
+Secondary Level
+none
+Creation Date
+6/26/2024 8:30pm
+Invoice Level
+Line Item
+Refundable
+Commissionable
+Taxable
+X
+Charge
+ID
+Adjustment
+Value
+100
+100 XXXX Surcharge
+CLASS_A
+Calculation
+Level
+Item Class
+101
+100 XXXX Surcharge
+CLASS_B
+Item Class
+102
+100 XXXX Surcharge
+CLASS_C
+Item Class
+103
+100 XXXX Surcharge
+ITEM_A
+Item
+Global Adjustment Detail
+Value
+Order Date
+From
+Order Date
+To
+Invoice Date
+From
+Invoice Date
+To
+Recalculate Date
+5.00
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+4.00
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+4.50
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+4.00
+06/01/2024
+12/31/2024
+07/01/2024
+12/31/2024
+07/01/2024
+Calculation Type
+Per Cent
+Per Cent
+Per Cent
+Per Cent
+
+### Adjustment System Project Plan (2).pptx
+These rules will be applied to the Global Adjustment Maintenance UI.
+Adjustment Header
+To create a new adjustment, the user will enter a credit code.  The UI will call the ACRDMST API to retrieve the credit code information.
+Adjustment ID will be a system generated number.
+Fields populated by the API cannot be maintained in
+AshleyNET
+.
+Fields: Adjustment Name = CRDNO, space, CRDSC;
+credit_code
+= CRDNO;
+commissionable = CRDCO; taxable = CRDSLSTX; Invoice Level = CRDOPNFL1F; refundable = CRDOPNFL2F
+The user should be able to repopulate from the API ONLY if no adjustment detail record is active. (all “from” dates are in the future)
+If changes are necessary after a surcharge is active, the surcharge ID detail must be set to end on a near future date (respecting time fence) and a new surcharge created with the changes.
+There should be a
+control table
+containing all valid combinations for primary and secondary
+Calculation Levels
+.
+It should only be maintainable by IT.
+For MVP, only two entries will be present.  Development in the microservice will be necessary before adding any future options.
+MVP Fields:
+Calculation ID = 1; Level = 1; Value = “ITEMCLASS”; (for primary)
+Calculation ID = 1; Level = 2; Value = “NONE” (for secondary)
+There should be a
+control table
+containing all valid
+Invoice Levels
+.
+It should only be maintainable by IT.
+MVP:
+1=line-item level, 2=Order level
+Charge should default to checked but can be unchecked by the user if no detail record is active.
+Active Code: all records will be active upon creation.  They can be set to inactive by the user only if neither from date in the detail have passed. Once a from date has passed, the user can only maintain the to dates. Once the to dates have passed, then the record can be set to inactive if desired.
+At record creation, the creation date/time/user should be updated and the last change date/time/user.
+Upon update, the last change date/time/user should be updated
+Global Adjustment Maintenance Rules

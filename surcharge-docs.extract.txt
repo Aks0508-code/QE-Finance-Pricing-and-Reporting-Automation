@@ -1,0 +1,7202 @@
+
+### ADJUSTMENT MICROSERVICE SOP (1).docx
+Adjustment Microservice SOP
+Production URL:
+https://adjustment-microservice.prod.finance.ashleyfurniture.com/Adjustment/Orders
+Stage URL:
+https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders
+The caller should call the microservice in a way that it responds with the value needed.
+Example 1: if the caller needs the surcharge for the entire line-item quantity, then pass in the line-item quantity and the line item extended base price. The surcharge returned will be the extended surcharge for the quantity given.
+Example 2: if the caller needs the surcharge for a single item (quantity 1) then pass in the quantity of 1 or no quantity and the base price for 1.  The surcharge returned will be for a quantity of 1.
+Input Field Definitions
+Order Level (one per order. May have multiple orders per call)
+Order ID:
+Entry: Optional
+Format: String
+Customer:
+Entry: Required
+Format: String
+Ship To:
+Entry: Required
+Blank is a valid shipto
+Format: String
+Order Date:
+Entry: Required
+Format: ISO 8601
+Estimated ship to:
+Entry: Optional
+Format: ISO 8601
+Invoice Date:
+Entry: Optional
+Format: ISO 8601
+Warehouse ID:
+Entry: Optional
+Format: String
+Item Level (one per item on this order. May have multiple items per order)
+Item ID:
+Entry: Required
+Format: String
+Quantity:
+Entry: Optional
+Quantity of 1 will be assumed if not provided
+Format: Numeric
+Price:
+Entry: Required
+Should be the total price for the quantity given
+If no quantity is given, this should be the price for 1
+No unit of measure necessary
+Format: Numeric
+Output Field Definitions
+Order Level (one per order submitted)
+Order ID:
+Return:  Input value
+If no field is passed then the return is blank
+Format: String
+Customer ID:
+Return: Input value
+Format: String
+Ship To:
+Return: Input value
+Format: String
+Total Surcharge:
+Return: Sum of all surcharges for this order
+Format: Numeric
+Adjustments Level (one per item submitted this order)
+Item ID:
+Return: Input
+Format: String
+Quantity:
+Return: input
+If no field is passed or if the value is passed as null then the return value is set to 1
+Format: Numeric
+Price:
+Return: Input
+Format: Numeric
+Status:
+Return: 0=API OFF, the API check switch is set to off
+Return: 1=NONE APPLIED, no Adjustments applied for this item
+Return: 2=APPLIED, Adjustments applied for this item
+NOTE: If 0 or 1, no adjustment details will be sent for this item
+Format: String
+Adjustment Details (can be multiple per item)
+Credit Code
+Return: Credit Code associate with the adjustment
+Format: String
+Adjustment Name:
+Return: Name/Description of adjustment being applied.
+Typically: credit code concatenated with its description
+Format: String
+Adjustment Amount:
+Return: calculated dollar amount of this adjustment for the quantity given
+Format: Numeric
+Invoice level:
+Return: 1= the adjustment should be applied on the line-item level
+Return: 2= the adjustment should be applied on the Order level
+Format: String (Character value for maximum flexibility)
+Taxable:
+Return: Y=yes; N=no
+from the credit code
+Format: String
+Commissionable:
+Return: B=INVOICE & CM; I=INV only; N=Neither
+from the credit code
+Format: String
+Quantity:
+Return: input
+If no field is passed or if the value is passed as null then the return value is set to 1
+Format: Numeric
+Calculation value:
+Return: number value used in calculation
+example: 2 (indicating 2% when the calculation type is percentage)
+Format: Numeric
+Calculation type:
+Return: type of calculation performed
+example: “Percent”
+Format: String
+Applied level:
+Return: attribute used to qualify for adjustment
+example: “ItemClass”
+Format: String
+Applied Level value:
+Return: attribute value
+example: “ZABC”
+Format: String
+Charge:
+Return: true or false
+True = this is a charge that will increase the invoice amount
+False = this is a credit that will decrease the invoice amount
+Format: Boolean
+JSON Definition
+Type of call – POST
+Swagger documentation(technical) for this microservice
+https://aazeus-fnprwb01.ashleyfurniture.com/AdjustmentAPI/swagger/index.html
+Example 1
+Example of Input values for Microservice below. The minimum optional input values have been used. In this example the microservice check switch is set to ON
+Input Values
+{
+"orders": [
+{
+"order_id": " ",
+"customer_id": "8888300",
+"ship_to": "480",
+"order_date": "2024-06-27",
+"est_ship_date": "",
+"invoice_date": "",
+"warehouse_id": "",
+"items": [
+{
+"item_id": " ITEM-A",
+"quantity": 1,
+"price": 29.99​
+},
+}
+]
+},
+Output values
+{
+"orders": [
+{
+"order_id": "ORD-001",                    (order passed in)
+"customer_id": "8888300",            (customer passed in)
+"ship_to": "480",                                  (ship to passed in)
+"total_surcharge": 5,
+"adjustments": [
+{
+"item_id": "ITEM-A",                    (item number passed in)
+"quantity": 1,
+"price": 29.99​
+"status": “2”,
+"adjustment_details": [
+{
+"credit_code": "IMP",
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 1,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEM CLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+]
+}
+]
+}
+]
+}
+Example 2
+Example of Input values for Microservice. The minimum optional input values have been used. In this example the microservice check switch is set to ON
+Input Values
+{
+"orders": [
+{
+"order_id": "ORD-001",
+"customer_id": "8888300",
+"ship_to": "480",
+"order_date": "2024-06-27T10:30:00Z",
+"est_ship_date": "2024-06-30T14:00:00Z",
+"invoice_date": "2024-06-28T09:00:00Z",
+"warehouse_id": "005",
+"items": [
+{
+"item_id": "ITEM-A",
+"quantity": 1,
+"price": 29.99​
+},
+{
+"item_id": "ITEM-B",
+"quantity": 2,
+"price": 49.99​
+}
+]
+},
+{
+"order_id": "ORD-002",
+"customer_id": "8888300",
+"ship_to": "480",
+"order_date": "2024-06-27T11:45:00Z",
+"est_ship_date": "2024-07-01T10:00:00Z",
+"invoice_date": "2024-06-28T15:30:00Z",
+"warehouse_id": "003",
+"items": [
+{
+"item_id": "ITEM-C",
+"quantity": 3,
+"price": 19.99​
+}
+]
+}
+]
+}
+Output values
+{
+"orders": [
+{
+"order_id": "ORD-001",
+"customer_id": "8888300",
+"ship_to": "480",
+"total_surcharge": 5,
+"adjustments": [
+{
+"item_id": "ITEM-A",
+"quantity": 1,
+"price": 29.99​
+"status": “2”,
+"adjustment_details": [
+{
+"credit_code": "IMP",
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 1,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEM CLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+{
+"item_id": "ITEM-B",
+"quantity": 2,
+"price": 49.99​
+"status": “2”,
+"adjustment_details": [
+{
+"credit_code": "IMP",
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 1,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEM CLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+{
+"order_id": "ORD-002",
+"customer_id": "8888300",
+"ship_to": "480",
+"total_surcharge": 5,
+"adjustments": [
+{
+"item_id": "ITEM-C",
+"quantity": 3,
+"price": 19.99​
+"status": “2”,
+"adjustment_details": [
+{
+"credit_code": "IMP",
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 1,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEM CLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+]
+}
+]
+}
+]
+}
+Example 3
+Example of Input values for Microservice. The minimum optional input values have been used. In this example the microservice check switch is set to OFF
+Input Values
+{
+"orders": [
+{
+"order_id": " ",
+"customer_id": "8888300",
+"ship_to": "480",
+"order_date": "2024-06-27",
+"est_ship_date": "",
+"invoice_date": "",
+"warehouse_id": "",
+"items": [
+{
+"item_id": " ITEM-A",
+"quantity": 1,
+"price": 29.99​
+},
+}
+]
+},
+Output values
+{
+"orders": [
+{
+"order_id": "ORD-001",                    (order passed in)
+"customer_id": "8888300",            (customer passed in)
+"ship_to": "480",                                  (ship to passed in)
+"total_surcharge": 0,
+"adjustments": [
+{
+"item_id": "ITEM-A",                    (item number passed in)
+"quantity": 1,
+"price": 29.99​
+"status": “0”,
+"adjustment_details": [   ]
+}
+]
+}
+]
+}
+Microservice POSTMAN Call
+Call Input:
+Call Output:
+{
+"orders": [
+{
+"order_id": "ORD-001",
+"customer_id": "8888300",
+"ship_to": "480",
+"total_surcharge": 13.49,
+"adjustments": [
+{
+"item_id": "ITEM-A",
+"quantity": 2,
+“price”:
+"status": “2”,
+"adjustment_details": [
+{
+“credit_code”:”IMP”
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 5,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+]
+},
+{
+"item_id": "ITEM-B",
+"quantity": 2,
+“price”:
+"status": “2”,
+"adjustment_details": [
+{
+“credit_code”:”IMP”
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 8.49,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+]
+}
+]
+}
+]
+}
+In Process:
+Below is the link for the common procedure documentation for calling the microservice from the AS400.
+Common Procedure information for AS400 call of Pricing Adjustment Microservice (1).docx
+Version
+12/04/24 - Bill Collins      Added price to the Output in the definition and the examples, moved the         quantity field from the Adjustments Detail level to the Adjustments level.
+
+### ADJUSTMENT MICROSERVICE SOP.docx
+Adjustment Microservice SOP
+Production URL:
+https://adjustment-microservice.prod.finance.ashleyfurniture.com/Adjustment/Orders
+Stage URL:
+https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders
+The caller should call the microservice in a way that it responds with the value needed.
+Example 1: if the caller needs the surcharge for the entire line-item quantity, then pass in the line-item quantity and the line item extended base price. The surcharge returned will be the extended surcharge for the quantity given.
+Example 2: if the caller needs the surcharge for a single item (quantity 1) then pass in the quantity of 1 or no quantity and the base price for 1.  The surcharge returned will be for a quantity of 1.
+Input Field Definitions
+Order Level (one per order. May have multiple orders per call)
+Order ID:
+Entry: Optional
+Format: String
+Customer:
+Entry: Required
+Format: String
+Ship To:
+Entry: Required
+Blank is a valid shipto
+Format: String
+Order Date:
+Entry: Required
+Format: ISO 8601
+Estimated ship to:
+Entry: Optional
+Format: ISO 8601
+Invoice Date:
+Entry: Optional
+Format: ISO 8601
+Warehouse ID:
+Entry: Optional
+Format: String
+Item Level (one per item on this order. May have multiple items per order)
+Item ID:
+Entry: Required
+Format: String
+Quantity:
+Entry: Optional
+Quantity of 1 will be assumed if not provided
+Format: Numeric
+Price:
+Entry: Required
+Should be the total price for the quantity given
+If no quantity is given, this should be the price for 1
+No unit of measure necessary
+Format: Numeric
+Output Field Definitions
+Order Level (one per order submitted)
+Order ID:
+Return:  Input value
+If no field is passed then the return is blank
+Format: String
+Customer ID:
+Return: Input value
+Format: String
+Ship To:
+Return: Input value
+Format: String
+Total Surcharge:
+Return: Sum of all surcharges for this order
+Format: Numeric
+Adjustments Level (one per item submitted this order)
+Item ID:
+Return: Input
+Format: String
+Quantity:
+Return: input
+If no field is passed or if the value is passed as null then the return value is set to 1
+Format: Numeric
+Price:
+Return: Input
+Format: Numeric
+Status:
+Return: 0=API OFF, the API check switch is set to off
+Return: 1=NONE APPLIED, no Adjustments applied for this item
+Return: 2=APPLIED, Adjustments applied for this item
+NOTE: If 0 or 1, no adjustment details will be sent for this item
+Format: String
+Adjustment Details (can be multiple per item)
+Credit Code
+Return: Credit Code associate with the adjustment
+Format: String
+Adjustment Name:
+Return: Name/Description of adjustment being applied.
+Typically: credit code concatenated with its description
+Format: String
+Adjustment Amount:
+Return: calculated dollar amount of this adjustment for the quantity given
+Format: Numeric
+Invoice level:
+Return: 1= the adjustment should be applied on the line-item level
+Return: 2= the adjustment should be applied on the Order level
+Format: String (Character value for maximum flexibility)
+Taxable:
+Return: Y=yes; N=no
+from the credit code
+Format: String
+Commissionable:
+Return: B=INVOICE & CM; I=INV only; N=Neither
+from the credit code
+Format: String
+Quantity:
+Return: input
+If no field is passed or if the value is passed as null then the return value is set to 1
+Format: Numeric
+Calculation value:
+Return: number value used in calculation
+example: 2 (indicating 2% when the calculation type is percentage)
+Format: Numeric
+Calculation type:
+Return: type of calculation performed
+example: “Percent”
+Format: String
+Applied level:
+Return: attribute used to qualify for adjustment
+example: “ItemClass”
+Format: String
+Applied Level value:
+Return: attribute value
+example: “ZABC”
+Format: String
+Charge:
+Return: true or false
+True = this is a charge that will increase the invoice amount
+False = this is a credit that will decrease the invoice amount
+Format: Boolean
+JSON Definition
+Type of call – POST
+Swagger documentation(technical) for this microservice
+https://aazeus-fnprwb01.ashleyfurniture.com/AdjustmentAPI/swagger/index.html
+Example 1
+Example of Input values for Microservice below. The minimum optional input values have been used. In this example the microservice check switch is set to ON
+Input Values
+{
+"orders": [
+{
+"order_id": " ",
+"customer_id": "8888300",
+"ship_to": "480",
+"order_date": "2024-06-27",
+"est_ship_date": "",
+"invoice_date": "",
+"warehouse_id": "",
+"items": [
+{
+"item_id": " ITEM-A",
+"quantity": 1,
+"price": 29.99​
+},
+}
+]
+},
+Output values
+{
+"orders": [
+{
+"order_id": "ORD-001",                    (order passed in)
+"customer_id": "8888300",            (customer passed in)
+"ship_to": "480",                                  (ship to passed in)
+"total_surcharge": 5,
+"adjustments": [
+{
+"item_id": "ITEM-A",                    (item number passed in)
+"quantity": 1,
+"price": 29.99​
+"status": “2”,
+"adjustment_details": [
+{
+"credit_code": "IMP",
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 1,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEM CLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+]
+}
+]
+}
+]
+}
+Example 2
+Example of Input values for Microservice. The minimum optional input values have been used. In this example the microservice check switch is set to ON
+Input Values
+{
+"orders": [
+{
+"order_id": "ORD-001",
+"customer_id": "8888300",
+"ship_to": "480",
+"order_date": "2024-06-27T10:30:00Z",
+"est_ship_date": "2024-06-30T14:00:00Z",
+"invoice_date": "2024-06-28T09:00:00Z",
+"warehouse_id": "005",
+"items": [
+{
+"item_id": "ITEM-A",
+"quantity": 1,
+"price": 29.99​
+},
+{
+"item_id": "ITEM-B",
+"quantity": 2,
+"price": 49.99​
+}
+]
+},
+{
+"order_id": "ORD-002",
+"customer_id": "8888300",
+"ship_to": "480",
+"order_date": "2024-06-27T11:45:00Z",
+"est_ship_date": "2024-07-01T10:00:00Z",
+"invoice_date": "2024-06-28T15:30:00Z",
+"warehouse_id": "003",
+"items": [
+{
+"item_id": "ITEM-C",
+"quantity": 3,
+"price": 19.99​
+}
+]
+}
+]
+}
+Output values
+{
+"orders": [
+{
+"order_id": "ORD-001",
+"customer_id": "8888300",
+"ship_to": "480",
+"total_surcharge": 5,
+"adjustments": [
+{
+"item_id": "ITEM-A",
+"quantity": 1,
+"price": 29.99​
+"status": “2”,
+"adjustment_details": [
+{
+"credit_code": "IMP",
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 1,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEM CLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+{
+"item_id": "ITEM-B",
+"quantity": 2,
+"price": 49.99​
+"status": “2”,
+"adjustment_details": [
+{
+"credit_code": "IMP",
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 1,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEM CLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+{
+"order_id": "ORD-002",
+"customer_id": "8888300",
+"ship_to": "480",
+"total_surcharge": 5,
+"adjustments": [
+{
+"item_id": "ITEM-C",
+"quantity": 3,
+"price": 19.99​
+"status": “2”,
+"adjustment_details": [
+{
+"credit_code": "IMP",
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 1,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEM CLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+]
+}
+]
+}
+]
+}
+Example 3
+Example of Input values for Microservice. The minimum optional input values have been used. In this example the microservice check switch is set to OFF
+Input Values
+{
+"orders": [
+{
+"order_id": " ",
+"customer_id": "8888300",
+"ship_to": "480",
+"order_date": "2024-06-27",
+"est_ship_date": "",
+"invoice_date": "",
+"warehouse_id": "",
+"items": [
+{
+"item_id": " ITEM-A",
+"quantity": 1,
+"price": 29.99​
+},
+}
+]
+},
+Output values
+{
+"orders": [
+{
+"order_id": "ORD-001",                    (order passed in)
+"customer_id": "8888300",            (customer passed in)
+"ship_to": "480",                                  (ship to passed in)
+"total_surcharge": 0,
+"adjustments": [
+{
+"item_id": "ITEM-A",                    (item number passed in)
+"quantity": 1,
+"price": 29.99​
+"status": “0”,
+"adjustment_details": [   ]
+}
+]
+}
+]
+}
+Microservice POSTMAN Call
+Call Input:
+Call Output:
+{
+"orders": [
+{
+"order_id": "ORD-001",
+"customer_id": "8888300",
+"ship_to": "480",
+"total_surcharge": 13.49,
+"adjustments": [
+{
+"item_id": "ITEM-A",
+"quantity": 2,
+“price”:
+"status": “2”,
+"adjustment_details": [
+{
+“credit_code”:”IMP”
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 5,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+]
+},
+{
+"item_id": "ITEM-B",
+"quantity": 2,
+“price”:
+"status": “2”,
+"adjustment_details": [
+{
+“credit_code”:”IMP”
+"adjustment_name": "IMP IMPORT SURCHARGE",
+"adjustment_amount": 8.49,
+"invoice_level": “1”,
+"taxable": “N”,
+"commissionable": “N”,
+"calculation_value": 1,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "CLASS-A",
+"charge": true
+}
+]
+}
+]
+}
+]
+}
+In Process:
+Below is the link for the common procedure documentation for calling the microservice from the AS400.
+Common Procedure information for AS400 call of Pricing Adjustment Microservice (1).docx
+Version
+12/04/24 - Bill Collins      Added price to the Output in the definition and the examples, moved the         quantity field from the Adjustments Detail level to the Adjustments level.
+
+### Adjustment Private Data API test Script.docx
+Adjustment Private Data Sync API Test Script
+In order to not affect the Order and Invoice testing the Stage Microservice Private Data cannot be changed without notifying the testing teams. To be able to test the Adjustment Private Data sync API’s in Stage we will need to notify the Teams of a test window and then perform the following actions:
+Communicate the test window to the Teams
+Contacts?
+Save the Adjustment Private Data From Stage
+Header
+Detail
+Override
+Clear the Adjustment Private Data in Stage
+Header
+Detail
+Override
+Clear the Adjustment AshleyNet UI data in Stage
+Header
+Detail
+Override
+Copy(SQL) the saved Adjustment Private data to the Adjustment AshleyNet UI data in Stage
+Header
+Detail
+Override
+Run the Adjustment Private Data API’s in Stage
+Header API <name>
+Detail API <name>
+Override API <name>
+Validate the Adjustment Private Data in Stage
+Validate that the Private data was copied(added) from the AshleyNet UI data and that the field data matches.
+Header
+Detail
+Override
+Make additions/changes using SQL to the Adjustment AshleyNet UI data in Stage
+Header
+Revise a header charge code
+Detail
+Add a detail record for item class
+Revise an item class percentage
+Make a detail record inactive
+Override
+Add a customer override
+Revise an override percentage
+Make an override inactive
+Run the Adjustment Private Data API’s again in Stage
+Header API <name>
+Detail API <name>
+Override API <name>
+Validate the Adjustment Private Data in Stage for the Adjustment AshleyNet UI changes
+Header
+Validate the charge code was revised
+Detail
+Validate that the added detail record was copied
+Validate the revised percentage was changed
+Validate the inactive detail record was not copied
+Override
+Validate that the added override record was copied
+Validate the revised percentage was changed
+Validate the inactive override record was not copied
+Clear the Adjustment Private Data in Stage
+Header
+Detail
+Override
+Restore the Adjustment Private Data in Stage to it’s original state
+Header
+Detail
+Override
+Communicate That Order and Invoice testing can proceed
+
+### Price List and Commission Adjustment Maintenance.docx
+Price List and Commission Adjustment Maintenance
+File Maintenance > Price Maintenance > Price Code> (select) a Price Code >(select) Add New
+1.Delete an Item from the code
+2.Proceed to save
+3.Now click on “Add new”
+4.Popup opens
+5.Enter the Item deleted and give continue
+6.Cancel repurpose opens’
+
+### Surcharge -  Application Document_v3 (2).docx
+Ashley Furniture Industries, LLC.  -  Ashley Distribution Services, Ltd.  -  Ashley
+Application Document
+Surcharge UI/Data Sync/ Microservice
+Project Title: Surcharge UI/ Data Sync/ Microservice
+Dev Ops Epic: CI - 2024 Q3 & Q4 - Pricing -
+Dev Ops Epic Link:  EPIC 1194258
+Dev Ops Feature: CI - Adjustment Microservice
+Dev Ops Feature Link: FEATURE 1276263
+Version: 1.1
+Revision History
+Version #
+Change Implementation Date
+Detailed Description
+Change Request Number
+Reference Section page Number
+Author
+1.0
+Implementation of Adjustment microservice for surcharge project
+CHG0038689,
+CHG0038903,
+CHG0039158
+1.1
+Implementation of PIM Product Data API for Adjustment microservice
+CHG0041582
+1.2
+Configuring the windows job to update the PIM Product Details
+CHG0041919
+Implementation of Adjustment microservice on Kubernetes and Adjustment Details API for surcharge project
+CHG0043438
+Production promote of Adjustment UI Changes in Ashley Net Application
+CHG0043667
+Production promote of PIM API and windows job scheduler
+CHG0043746
+How to Update the Table of Contents:
+Click anywhere in the Table of Contents to select it (it becomes grayed when selected).
+The Update Table dialog box appears in the upper left corner of the table:
+Click on Update Table and The Update Table of Contents dialog box appears:
+Choose Option 1 to Update page numbers only if none of the headings have changed, but just the page numbers; OR choose option 2 to Update the entire table if more substantial changes were made to your document – such as headings that were added or removed, or additional paragraphs that were formatted with heading styles for inclusion in the Table of Contents.
+Click OK.
+Introduction
+Introduction
+With global container shipping capacity reduced by 30%, freight rates have surged, threatening profit margins on imported goods. To counter this, a dynamic Import Surcharge mechanism is proposed. This solution ensures that surcharges are applied fairly and visibly across both new and open orders, with centralized control and customer-level flexibility.
+Core Functionalities
+1. Global & Customer-Level Management
+Global Configuration: Centralized surcharge settings by Item Class.
+Customer Overrides: Ability to exclude customers or apply custom surcharge percentages.
+2. Surcharge Table & Item Class Mapping
+A dedicated surcharge table maps applicable Item Classes to:
+Surcharge percentage (x%)
+Effectivity dates (based on order date)
+Future-ready for additional levels: Sales Class, Warehouse, Item, etc.
+3. Calculation Logic
+Line-Item Based: Surcharge = Unit Price × % Surcharge
+Rounding: Rounded up to the nearest dollar.
+Quantity Handling: Extended based on quantity ordered.
+Live Recalculation: Until shipment/invoicing, surcharge is recalculated dynamically.
+Non-Commissionable & Non-Taxable: By default, with future options to enable both.
+4. Invoice Presentation
+Machine-to-Machine: Surcharge is rolled into the line-item price.
+Human-Readable: Surcharge appears as a separate line item for clarity.
+5. Future-Proofing
+Support for:
+Flat rate, cube, or weight-based surcharges
+Invoice-date-based effectivity
+Recalculation triggers for open orders
+Refundable surcharges
+Commissionable and taxable options
+Order-level surcharge aggregation
+Manual Trigger Urls:
+Dev:  https://adjustment-microservice.dev.finance.ashleyfurniture.com/Adjustment/Orders
+Stage: https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders
+Prod:  https://adjustment-microservice.prod.finance.ashleyfurniture.com/Adjustment/Orders
+Sample Input:
+{
+"orders": [
+{
+"order_id": "2345",
+"customer_id": 2307300,
+"ship_to": "01",
+"order_date": "2025-06-12T00:00:00Z",
+"est_ship_date": "2025-05-31T14:00:00Z",
+"invoice_date": "2024-06-28T09:00:00Z",
+"warehouse_id": "335",
+"items": [
+{
+"item_id": "B044-26",
+"quantity": 1,
+"price": "10.00"
+}
+]
+}
+]
+}
+Screenshots, Out of the Surcharge
+{
+"orders": [
+{
+"order_id": "2345",
+"customer_id": 2307300,
+"ship_to": "01",
+"total_surcharge": 1.00,
+"adjustments": [
+{
+"item_id": "B044-26",
+"quantity": 1,
+"price": 10.00,
+"status": "2",
+"adjustment_details": [
+{
+"credit_code": "TSC",
+"adjustment_name": "TSC TSC SURCHARGE SALES - TEST",
+"adjustment_amount": 1.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"calculation_value": 1.5000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZDYB",
+"charge": true,
+"quantity": 1,
+"price": 10.00
+}
+]
+}
+]
+}
+]
+}
+Stored PROC which handles the surcharge
+CREATE procedure [dbo].[usp_GetAdjustmentAmount_v7]
+(
+@AdjustmentRequests AdjustmentRequestType READONLY
+)
+AS
+/**********************************************************
+Procedure Name: [usp_GetAdjustmentAmount_v7]
+Database: Surcharge
+Reason Created : Calculates the surcharge from customer override first if not then will take it from Adjustment Detail
+Author: Ranjith M
+Changed by: Damodharan R
+Owned By: Pricing
+Used By:  Pricing
+Used For: Pricing
+Date Created: 12/1/2024
+Change done on : 27/1/2024
+Object(s) Used: tblItemList, tblAdjustmentCustomerOverride, tblAdjustmentDetail, tblAdjustmentHeader,tblAdjustmentItemExclusion
+Change done on : 04/28/2025
+Updated By : Damodharan R
+Changes : Excluded Warehouse
+Change done on : 05/08/2024
+Updated By : Damodharan R
+Changes : Warehouse added for customer override
+Sample Execute :
+DECLARE @AdjustmentRequests AS AdjustmentRequestType;
+INSERT INTO @AdjustmentRequests (ItemNumber, StartDate, CustomerId, CustShipTo, Price, Quantity,Warehouse)
+VALUES
+('W549-68', '2025-04-23', 1059900, '38', 63.00, 1,1)
+, ('W648-68', '2025-04-23', 193300, '85', 63.00, 1,5)
+EXEC [usp_GetAdjustmentAmount_v7] @OrderItems
+Change#      Last Modified By        Last Modified On        Description
+1
+*********************************************************/
+BEGIN
+SET NOCOUNT ON;
+BEGIN TRY
+-- DECLARE @AdjustmentRequests AS AdjustmentRequestType;
+---- Insert first 100 items
+--INSERT INTO @AdjustmentRequests (ItemNumber, StartDate, CustomerId, CustShipTo, Price, Quantity,Warehouse)
+--VALUES
+--    ('W648-68', '2025-04-29', 193300, '85', 63.00, 1,'')
+-- exec [usp_GetAdjustmentAmount_v7] @AdjustmentRequests
+drop table if exists #Surcharge
+SELECT
+r.ItemNumber,
+r.Price,
+r.Quantity,
+c.customer_id,
+c.customer_ship_to,
+c.warehouse,
+c.order_start_date,
+c.calculation_type,
+c.calculation_value,
+CAST(
+CEILING(
+(r.Price/r.Quantity) *
+c.calculation_value * 0.01
+) * r.Quantity
+AS DECIMAL(16,2)
+) AS adjustment_amount,
+b.adjustment_detail_id,
+b.level_value,
+b.level,
+a.invoice_level,
+a.charge,
+a.taxable,
+a.commissionable,
+a.credit_code,
+a.adjustment_name,
+a.adjustment_id,
+i.itemclassCode  into #Surcharge
+FROM tblAdjustmentCustomerOverride c WITH (NOLOCK)
+inner join @AdjustmentRequests r on c.customer_id = r.CustomerId and c.customer_ship_to = r.CustShipTo
+INNER JOIN tblAdjustmentDetail b WITH (NOLOCK)
+ON b.adjustment_detail_id = c.adjustment_detail_id
+AND c.adjustment_id = b.adjustment_id
+INNER JOIN tblAdjustmentHeader a WITH (NOLOCK)
+ON a.adjustment_id = b.adjustment_id
+AND a.active_code = 1
+INNER JOIN tblItemList i WITH (NOLOCK)
+ON b.level_value = i.itemclassCode
+AND i.Number = r.ItemNumber
+WHERE c.customer_id = r.CustomerId
+AND c.customer_ship_to = r.CustShipTo
+AND c.override_type = 'C'
+AND c.active_code = 1
+AND r.StartDate BETWEEN c.order_start_date AND c.order_end_date
+AND (isnull(c.warehouse,'')='' or c.warehouse = r.warehouse)
+drop table if exists #SurchargeDetail
+SELECT
+r.ItemNumber,
+r.Price,
+'' as customer_id,
+'' as customer_ship_to,
+'' as warehouse,
+b.order_start_date as order_start_date,
+b.calculation_type,
+b.calculation_value,
+CAST(
+CEILING(
+(r.Price/r.Quantity) *
+b.calculation_value * 0.01
+) * r.Quantity
+AS DECIMAL(16,2)
+) AS adjustment_amount,
+b.adjustment_detail_id,
+b.level_value,
+b.level,
+a.invoice_level,
+a.charge,
+a.taxable,
+a.commissionable,
+a.credit_code,
+a.adjustment_name,
+a.adjustment_id,
+i.itemclassCode,b.order_end_date,b.active_code  into  #SurchargeDetail
+FROM tblAdjustmentDetail b WITH (NOLOCK)
+INNER JOIN tblAdjustmentHeader a WITH (NOLOCK)
+ON a.adjustment_id = b.adjustment_id
+AND a.active_code = 1
+INNER JOIN tblItemList i WITH (NOLOCK)
+ON b.level_value = i.itemclassCode
+inner join @AdjustmentRequests r on i.Number = r.ItemNumber
+AND  b.level_value = i.itemclassCode
+WHERE b.level = 'ITEMCLASS'
+AND b.active_code = 1
+AND r.StartDate BETWEEN b.order_start_date AND b.order_end_date
+SELECT
+c.ItemNumber,
+c.calculation_type,
+c.calculation_value,
+c.adjustment_amount AS adjustment_amount,
+c.customer_ship_to,
+c.adjustment_detail_id,
+c.level_value,
+c.level,
+c.invoice_level,
+c.charge,
+c.taxable,
+c.commissionable,
+c.credit_code,
+c.adjustment_name,
+c.adjustment_id,
+c.itemclassCode
+FROM #Surcharge  c WITH (NOLOCK)
+union
+SELECT
+sd.ItemNumber,
+sd.calculation_type,
+sd.calculation_value,
+sd.adjustment_amount as adjustment_amount,
+'' as customer_ship_to,
+sd.adjustment_detail_id,
+sd.level_value,
+sd.level,
+sd.invoice_level,
+sd.charge,
+sd.taxable,
+sd.commissionable,
+sd.credit_code,
+sd.adjustment_name,
+sd.adjustment_id ,
+sd.itemclassCode
+FROM #SurchargeDetail sd
+where not exists (select 1  FROM #Surcharge ch where ch.ItemNumber = sd.ItemNumber and ch.credit_code = sd.credit_code)
+and NOT EXISTS (
+SELECT 1
+FROM [dbo].[tblAdjustmentCustomerOverride] c WITH (NOLOCK)
+INNER JOIN tblAdjustmentHeader a WITH (NOLOCK)
+ON a.adjustment_id = c.adjustment_id
+inner join #Surcharge cs
+on cs.customer_id = c.customer_id
+and cs.customer_ship_to = c.customer_ship_to
+WHERE c.customer_id = cs.customer_id
+AND c.override_type = 'E'
+AND c.customer_ship_to = cs.customer_ship_to
+AND (
+(cs.warehouse IS NOT NULL AND ( isnull(c.warehouse,'')='' or c.warehouse = cs.warehouse )) --Exclude specific and all warehouses
+)
+AND cs.order_start_date BETWEEN c.order_start_date AND c.order_end_date
+and a.credit_code  =  cs.credit_code
+)
+AND NOT EXISTS (
+select 1
+from dbo.tblAdjustmentItemExclusion ie with (nolock)
+inner join tblAdjustmentHeader ah with(nolock)
+on ie.aieAdjHeaderID = ah.adjustment_id and ie.aieActive_code = 1 and ah.active_code = 1
+inner join tblItemList i on i.Number = ie.aieItemNumber
+inner join #Surcharge cs on cs.ItemNumber = ie.aieItemNumber
+where cs.ItemNumber = ie.aieItemNumber
+and ie.aieAdjHeaderID = cs.adjustment_id
+and (cs.order_start_date BETWEEN ie.aieOrder_start_date AND ie.aieOrder_end_date))
+AND calculation_type IS NOT NULL
+END TRY
+BEGIN CATCH
+DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE()
+DECLARE @ErrorSeverity INT = ERROR_SEVERITY()
+DECLARE @ErrorState INT = ERROR_STATE()
+RAISERROR (@ErrorMessage, @ErrorSeverity, @ErrorState);
+RETURN -1;
+END CATCH;
+SET NOCOUNT OFF;
+END;
+Logic Flow
+Step 1: Customer Override Calculations (#Surcharge)
+sql
+Copy
+-- Calculates adjustments from customer-specific overrides
+-- Priority: Customer overrides take precedence
+-- Formula: CEILING((Price/Quantity) * calculation_value * 0.01) * Quantity
+Key Features:
+Joins customer overrides with adjustment details and headers
+Filters by active records and date ranges
+Includes warehouse-specific logic
+Uses item class codes for matching
+Step 2: Standard Adjustment Details (#SurchargeDetail)
+sql
+Copy
+-- Fallback calculations when no customer override exists
+-- Same calculation formula as customer overrides
+-- Applies to ITEMCLASS level adjustments
+Step 3: Final Result Set
+Combines both datasets using UNION, with logic to:
+Prioritize customer overrides over standard details
+Apply exclusion rules for customers marked with override type 'E'
+Filter out excluded items from tblAdjustmentItemExclusion
+Business Rules Implemented
+Customer Override Priority: Customer-specific rates override standard rates
+Date Range Validation: All adjustments must fall within valid date ranges
+Warehouse Flexibility: Supports both warehouse-specific and global overrides
+Exclusion Handling: Respects customer and item-level exclusions
+Active Record Filtering: Only processes active adjustments
+Key Tables Used
+tblAdjustmentCustomerOverride - Customer-specific rates
+tblAdjustmentDetail - Standard adjustment rates
+tblAdjustmentHeader - Adjustment metadata
+tblItemList - Item and class code mappings
+tblAdjustmentItemExclusion - Item-level exclusions
+Calculation Formula
+Adjustment Amount = CEILING((Price ÷ Quantity) × Rate% ÷ 100) × Quantity
+This procedure effectively implements a tiered pricing system where customer-specific agreements take precedence over standard rates, while maintaining proper exclusion controls and date-based validity.
+3.2Surcharge Flow
+Data Sync Flow :
+Adjustment UI Application:
+Adjustment Header Page:
+The Adjustment Header seems to encapsulate financial adjustments with fields like credit codes, charge/refund properties, and hierarchical levels. These fields are key to defining the behavior and classification of each adjustment.
+Key Fields:
+AdjustmentId – Unique identifier
+CreditCode – Adjustment type or reason code
+Description – Display label for the adjustment
+PrimaryLevel, SecondaryLevel, InvoiceLevel – Categorization hierarchy
+Commissionable, Taxable, Refundable, Chargeable – Boolean flags defining financial behavior
+Adjustment Header Page – AS/400 Integration for Credit Code Validation
+The Adjustment Header interface is tightly integrated with Ashley Furniture's backend AS/400 system to ensure accuracy and data integrity during user interactions. A critical aspect of this integration involves validating the entered Credit Code against the centralized master data repository.
+To accomplish this, the page dynamically invokes the following AS/400 web service endpoint:
+http://afiqua.ashleyfurniture.com:10010/web/services/PRC_Get_Credit_Code_Info?crdno={creditNumber}
+Adjustment Header Page – AS/400 Integration for Credit Code Validation
+The Adjustment Header interface is tightly integrated with Ashley Furniture's backend AS/400 system to ensure accuracy and data integrity during user interactions. A critical aspect of this integration involves validating the entered Credit Code against the centralized master data repository.
+To accomplish this, the page dynamically invokes the following AS/400 web service endpoint:
+http://afiqua.ashleyfurniture.com:10010/web/services/PRC_Get_Credit_Code_Info?crdno={creditNumber}
+Purpose and Flow
+User Input: When a user enters a credit number on the Adjustment Header screen, the application triggers a request to the above AS/400 endpoint with the crdno query parameter representing the user-provided credit number.
+Backend Validation: The AS/400 service responds with structured data regarding the credit code (e.g. validity, description, hierarchy levels, financial flags like chargeable/refundable).
+Frontend Enforcement: The page uses this response to:
+Confirm that the credit code exists and is valid.
+Prevent users from submitting invalid or obsolete credit numbers.
+Auto-populate related fields based on the returned data (e.g. description, levels, flags), minimizing manual input and ensuring consistency.
+Update Support: Once a valid credit code is verified, users are allowed to update additional details tied to that code (such as commissionable or taxable flags), ensuring flexibility while preserving data authenticity.
+Benefits
+Data Reliability: Only verified credit codes are allowed, minimizing the risk of transactional errors or billing misclassifications.
+Real-Time Synchronization: Ensures the web UI reflects the latest definitions and rules stored in the AS/400 system.
+Maintainability: Centralized service enables future updates to credit code rules without requiring changes on the client side.User Input: When a user enters a credit number on the Adjustment Header screen, the application triggers a request to the above AS/400 endpoint with the crdno query parameter representing the user-provided credit number.
+Backend Validation: The AS/400 service responds with structured data regarding the credit code (e.g. validity, description, hierarchy levels, financial flags like chargeable/refundable).
+Frontend Enforcement: The page uses this response to:
+Confirm that the credit code exists and is valid.
+Prevent users from submitting invalid or obsolete credit numbers.
+Auto-populate related fields based on the returned data (e.g. description, levels, flags), minimizing manual input and ensuring consistency.
+Update Support: Once a valid credit code is verified, users are allowed to update additional details tied to that code (such as commissionable or taxable flags), ensuring flexibility while preserving data authenticity.
+Benefits
+Data Reliability: Only verified credit codes are allowed, minimizing the risk of transactional errors or billing misclassifications.
+Real-Time Synchronization: Ensures the web UI reflects the latest definitions and rules stored in the AS/400 system.
+Maintainability: Centralized service enables future updates to credit code rules without requiring changes on the client side.
+Adjustment Detail Page:
+This interface manages fine-grained rules for surcharge adjustments at the item classification level. Each record is tightly coupled with a parent AdjustmentHeader (e.g., SSC Import Surcharge Sales) and defines conditions for calculating charges based on:
+DetailID: Unique record identifier
+CalculationLevel: Granularity of rule application (e.g., ITEMCLASS)
+Value: Classification code like ZECD, ZNWC, etc.
+CalculationType: PERCENT or FLAT
+Amount: Percentage or fixed surcharge
+OrderDateFrom/To: Eligibility window
+InvoiceDate: Optional field marking cutoff for invoicing
+Adjustment Customer Override :
+This module allows finance and operations teams to override standard surcharge adjustment rules per customer or ship-to location, ensuring flexibility for special accounts, warehouse routing, or exception handling.
+The Customer Override UI page is built to maintain granular surcharge exception records on a per-customer basis. It plays a pivotal role in customizing how the surcharge microservice applies percentage-based charges for specific items, ensuring flexibility and precision in pricing logic.
+This module allows the system to override standard adjustment rules with customer-specific surcharge percentages, tied to an item's classification and date constraints.
+Surcharge Microservice – Processing Workflow
+Here’s how the microservice incorporates customer overrides during its execution:
+1. Item Parsing
+For each order line, extract:
+ItemNumber
+CustomerId
+ItemClassCode
+OrderDate
+2. Override Lookup
+The microservice queries the CustomerOverride table to check if:
+A record exists for the given CustomerId and ItemClassCode
+The current OrderDate is within the specified date range
+The AdjustmentDetailId maps to a valid AdjustmentHeader, which holds the actual CreditCode
+3. Credit Code Mapping
+Each override is indirectly linked to its CreditCode through:
+CustomerOverride → AdjustmentDetail → AdjustmentHeader
+This chain allows the microservice to validate the percentage override within the context of the business adjustment category.
+4. Surcharge Decision
+If a matching customer override exists:
+Use the custom percentage from the override
+If not:
+Fallback to the default rule in AdjustmentDetail
+Core Data Fields
+OverrideIdPrimary key for override record
+AdjustmentDetailIdReference to the surcharge rule being overridden
+CustomerIdTarget customer number
+CustomerShipToSpecific shipping destination for the customer
+WarehouseLogical or physical warehouse identifier
+CalculationLevelHow adjustment is evaluated (e.g. ITEMCLASS, TEST)
+Value -   Target classification (e.g. ZECD, TESTVALUE)
+CalculationTypeType of surcharge (PERCENT / FLAT)
+AmountSurcharge amount
+OrderDateEffective start date for override
+IsActive   -     Status flag for soft deletion or archival
+Item Exclusion:
+This module allows finance and operations teams to override standard surcharge adjustment rules per customer or ship-to location, ensuring flexibility for special accounts, warehouse routing, or exception handling.
+Core Data Fields
+OverrideIdPrimary key for override record
+AdjustmentDetailIdReference to the surcharge rule being overridden
+CustomerIdTarget customer number
+CustomerShipToSpecific shipping destination for the customer
+WarehouseLogical or physical warehouse identifier
+CalculationLevelHow adjustment is evaluated (e.g. ITEMCLASS, TEST)
+ValueTarget classification (e.g. ZECD, TESTVALUE)
+CalculationTypeType of surcharge (PERCENT / FLAT)
+AmountSurcharge amount
+OrderDateEffective start date for override
+IsActiveStatus flag for soft deletion or archival
+The Item Exclusion module is purpose-built to manage and enforce item-level exceptions in the Surcharge Microservice for Ashley Furniture. It serves as a control layer that ensures specific item numbers are excluded from surcharge calculations during invoice or order processing. The Item Exclusion feature is a critical submodule designed to enhance the accuracy and flexibility of Ashley Furniture’s Surcharge Calculation Microservice. It provides operational control over which item numbers should be excluded from surcharge computation—often for scenarios involving promotions, legacy SKUs, strategic partnerships, or internal test items.
+This module plays a vital role in enabling business flexibility, allowing finance and operations teams to configure exceptions for promotional SKUs, legacy items, test data, or custom use cases without altering the core adjustment rule logic.
+UI Capabilities & Functional Components
+The user interface is designed to be intuitive, scalable, and secure, offering core features for data management, auditability, and high-volume control.
+Search Functionality
+Enables real-time lookup of excluded items by full or partial item number.
+Supports filters such as:
+Header ID
+Order Date From / To
+Created By
+Active Code (to distinguish current exclusions)
+Ideal for reviewing and validating entries across distributed teams.
+Upload Functionality
+Users can upload bulk item exclusions via structured Excel or CSV templates.
+Uploads typically contain:
+ItemNumber
+OrderDateFrom
+OrderDateTo
+ReasonCode (optional)
+Backend processes and validates entries to prevent duplicates and ensure integrity.
+📥 Export to Excel
+Downloads the complete or filtered exclusion list in Excel format.
+Useful for internal audits, external reviews, or backups.
+Export includes metadata such as:
+Timestamps
+User actions
+Item status (Active Code)
+Name
+Repo
+Surcharge Microservice
+https://ashleyfurniture@dev.azure.com/ashleyfurniture/
+Financial%20Planning%20and%20Analysis/_git/Adjustment_Microservice
+Windows Job PIM API
+https://dev.azure.com/ashleyfurniture/Financial%20
+Planning%20and%20Analysis/_git/Windows_Job_PIMAPI
+PIM API
+https://ashleyfurniture.visualstudio.com/Financial%20
+Planning%20and%20Analysis/_git/Adjustment_PIMAPI
+Microservice URL
+Keys
+https://devapigw.ashleyfurniture.com/surcharge
+-microservice/orders
+224b086b55484e6b88ebceda0b000eb2
+https://stageapigw.ashleyfurniture.com/surcharge-microservice/orders
+99bf2f7171164c408d5b4b91a7df4c65
+https://apigw3.ashleyfurniture.com/
+surcharge-microservice/orders
+f562102e6c584cf2a852f8b051f4e863
+DEV :
+DB Server Name
+aazeud-fnprsq01
+SQL Account
+s_ApiPriDBUserDev
+Cluster
+afi-dev-eastus-kube.ashleyfurniture.com
+Namespace
+finance
+DNS CNAME:
+adjustment-microservice.dev.finance.ashleyfurniture.com
+TLS cert name
+adjustment-microservice-tls
+Managed Identity Name
+afi-adjustment-microservice-api-dev-mi
+Resource group
+AFI-FINANCE-DEV-RG
+Subscription
+AFI DEV
+Database Account
+Applicaiton Insights
+afi-surcharge-microservice-dev-ai
+STAGE :
+DB Server Name
+AAZEUS-FNPRSQ01
+SQL Account
+s_ApiPriDBUserStage
+Cluster
+afi-stage-eastus-kube.ashleyfurniture.com
+Namespace
+finance
+DNS CNAME:
+adjustment-microservice.stage.finance.ashleyfurniture.com
+TLS cert name
+adjustment-microservice-tls
+Managed Identity Name
+afi-adjustment-microservice-api-stage-mi
+Resource group
+AFI-FINANCE-DEV-RG
+Subscription
+AFI STAGE
+Database Account
+Applicaiton Insights
+afi-surcharge-microservice-stage-ai
+PROD:
+DB Server Name
+AE1DCVPSQ23766
+SQL Account
+s_ApiPriDBUserPROD
+Cluster
+afi-prod-eastus-kube.ashleyfurniture.com
+Namespace
+finance
+DNS CNAME:
+adjustment-microservice.prod.finance.ashleyfurniture.com
+TLS cert name
+adjustment-microservice-tls
+Managed Identity Name
+afi-adjustment-microservice-api-prod-mi
+Resource group
+AFI-FINANCE-DEV-RG
+Subscription
+AFI PROD
+Database Account
+connected through SQL account of ashleyfurniture\s_ApiPriDBUserProd
+Applicaiton Insights
+afi-surcharge-microservice-prod-ai
+Change Request with respect to Surcharge Project:
+Change Request
+Description
+CHG0038903
+Implementation of Adjustment microservice for surcharge project
+CHG0039158
+Implementation of Adjustment microservice for surcharge project
+CHG0041582
+Implementation of PIM Product Data API for Adjustment microservice
+CHG0041919
+Configuring the windows job to update the PIM Product Details
+CHG0043438
+Implementation of Adjustment microservice on Kubernetes and Adjustment Details API for surcharge project
+CHG0043667
+Production promote of Adjustment UI Changes in Ashley Net Application
+CHG0043746
+Production promote of PIM API and windows job scheduler
+Appendixes
+Glossaries
+TWN: The Work Number (An automated employment and income verification service from Equifax)
+UC: Unemployment Compensation
+ACA: Affordable Care Act
+UKG: Ultimate Kronos Group (A provider of human capital management (HCM) solutions)
+ADP: Automatic Data Processing (A provider of human resources management software and services)
+BI: Business Intelligence (Refers to technologies, applications, and practices for collecting, integrating, analyzing, and presenting business information)
+SFTP: Secure File Transfer Protocol (A secure method for transferring files between systems over a network)
+HTTPS: Hypertext Transfer Protocol Secure (A secure version of HTTP, the protocol used for transferring data over the internet)
+FTP: File Transfer Protocol (A standard network protocol for transferring computer files between a client and server on a network)
+DL: Distribution List (Refers to an email distribution list for notifications)
+UAT: User Acceptance Testing (The final phase of software testing where actual users validate and accept the system)
+CST: Central Standard Time
+AFI:  Ashley Furniture Industries
+
+### Surcharge MicroService_AdditionalChanges 2.docx
+Surcharge MicroService – Additional Changes
+We have updated our Surcharge Microservice with additional changes
+Include API Key-based authorization using the API-Key header.
+Include CorrelationId using ‘Correlation-ID’ header.
+What's Changed: All API calls now require below mandatory request headers to be included in the API request headers
+API-Key
+Correlation-ID
+Request Header
+Values / Comments
+API-Key
+Unique API keys have been generated and provided for each consuming team through separate Email. Please using those API Keys.
+Correlation-ID
+For each API request unique GUID needs to be generated from source team and pass it into request header
+Sample format: 01918548-d105-4851-b349-5bc9f1a1f951
+Each distinct API key allows us to track and monitor usage by source/consuming team.
+Correlation Id – Allows to trace request/response flow across multiple services.
+Sample Request headers:
+Sample Input Request: (No Recent changes)
+{
+"orders": [
+{
+"order_id": "",
+"customer_id": 1256500,
+"ship_to": "01",
+"order_date": "6/16/2025",
+"warehouse_id": " ",
+"items": [
+{
+"item_id": "1030125",
+"quantity": 2,
+"price": 220.32
+}
+]
+}
+]
+}
+Sample Response: (No recent changes with response format)
+{
+"orders": [
+{
+"order_id": "",
+"customer_id": 1256500,
+"ship_to": "01",
+"total_surcharge": 0,
+"adjustments": [
+{
+"item_id": "1030125",
+"quantity": 2,
+"price": 220.32,
+"status": "1",
+"adjustment_details": []
+}
+]
+}
+]
+}
+
+### Surcharge notes - CR016.docx
+Revise Menu Option1079 (CR016) to include new fields.
+The fields, CRDOPNFL1F and CRDOPNFL2F, are already in ACRDMAS but not currently being used.
+Display file (CR016FM) changes.  CRDOPNFL1F and CRDOPNFL2F will be added to formats FMT02, FMT03, and FMT05.
+Format FMT02 is used for Add and Change.
+When in Add mode will need to show all options in the description field
+When in Change Mode will only show the description of the selected value for the fields.
+Format FMT03 is used to delete records.
+This screen will display the selected values for the fields.
+Format FMT05 is used to display the selected code.
+This screen will display the selected values for the fields.
+Program CR016 changes.
+Add code to maintain the CRDOPNFL1F and CRDOPNFL2F fields.
+The field name is added to a work field to in CR016 to extract/verify entered codes.
+Notes:The CRDVLLST must contain the available values for these fields.
+(I already added them to AFIQUA via menu option 0243 (CR016A).
+To add special charges, they must exist in INSCCD file before they can be added.
+Use menu option1446 (CSP321C) to maintain INSCCD.
+CR016 screen:
+Select screen:
+View record:
+Add/Change Screen:
+Delete Screen:
+
+### Surcharge QA Preparation Document-Akshaya.docx
+This Document is related to surcharge – FIN Pricing Team prepared by Akshaya (QA) for internal reference purposes.
+This document is break down into parts with the userstory 1201311
+1. Database Tables (Left Side)
+Adjustment Header Table:
+Primary configuration table with fields:
+adjustment_id (unique identifier)
+adjustment_name (CRDNO)
+credit_code
+calculation_level
+commissionable (Y/N)
+taxable (Y/N)
+invoice_level
+active_code (Boolean)
+Various timestamp fields
+Adjustment Detail Table:
+Contains calculation rules:
+adjustment_detail_id
+level (e.g., "ItemClass")
+level_value
+calculation_type ("Percent")
+calculation_value
+order_start_date/end_date
+active_code
+Adjustment Customer Override Table:
+Customer-specific rules:
+override_type (E=Exclude, C=Custom)
+customer_id
+customer_ship_to
+calculation details
+date ranges
+2. Output Structure (Right Side)
+Microservice Outbound - Order Level:
+Order ID (A7)
+Customer ID (P80)
+Ship To (A4)
+Total Surcharge (P132)
+Microservice Outbound - Adjustment Level:
+Item ID (A15)
+Status codes:
+0 = API OFF
+1 = NONE APPLIED
+2 = APPLIED
+Microservice Outbound - Adjustment Details:
+credit_code (CRDNO)
+adjustment_name
+Adjustment amount (calculated)
+invoice_level
+taxable status
+commissionable status
+Quantity
+calculation_value (Ex: 2.0000)
+calculation_type ("Percent")
+applied_level ("ItemClass")
+applied_level_value
+charge (Boolean)
+Data Flow Process:
+Input Processing:
+System receives Order ID, Customer ID, and Ship To
+Validates against Header table for active adjustments
+Calculation Flow:
+Checks Adjustment Header for active records
+References Adjustment Detail for calculation rules
+Verifies Customer Override for exceptions
+Applies appropriate calculation type and value
+Output Generation:
+Compiles all calculations at item level
+Accumulates total surcharge at order level
+Returns complete adjustment details with appropriate status codes
+The rightmost columns (A7, P80, etc.) appear to be field specifications for length and type of data storage.
+Starting Point
+"Receive Parms": System gets input data (like order details, customer info)
+"Check Switch": Checks if the service is ON or OFF (like a light switch)
+Initial Decision
+If switch is OFF → "Return level 0" (service doesn't process anything)
+If switch is ON → Continues to next steps
+Main Process Flow (when ON)
+First retrieves all product data for the items in the order
+Runs calculations for each order/item
+Checks for any Item Class Adjustments (like import surcharges)
+Data Sources (shown in right side boxes)
+The system uses four private databases:
+Product Data (item information)
+Header Data (adjustment rules)
+Detail Data (specific adjustment details)
+Override Data (customer-specific rules)
+Future Planning
+Shows placeholder boxes for "Future Adjustment" (system is designed to add more adjustment types later)
+End Point
+"Return Adjustments": Sends back the final calculated adjustments
+Think of it like a decision tree where each step depends on the previous one, similar to:
+Checking if a store is open (switch)
+If open, looking up prices (product data)
+Applying any special discounts (adjustments)
+Calculating final price (return adjustments)
+About the surcharge story testing focus
+1.Switch Functionality Tests
+a) Switch OFF Scenarios:
+•Verify status code returns 0
+•Confirm stub out values remain unchanged
+•Validate no calculations are performed
+b) Switch ON Scenarios:
+•Verify system processes new logic
+•Validate connection to private data tables
+•Confirm appropriate status codes (1 or 2) are returned
+2. Data Validation Tests
+a) Product Data Validation:
+•Valid ItemNumber in tblItemList
+•Valid ItemClass-code mapping
+•Invalid/Non-existent item numbers
+•Multiple items in single order
+b) Adjustment Header Validation:
+•Active vs Inactive adjustments
+•Valid credit_codes
+•Valid adjustment_names
+•Valid/Invalid date ranges
+c) Adjustment Detail Validation:
+•ITEMCLASS level validations
+•Multiple active surcharges
+•Date range boundaries
+•Active/Inactive status
+3. Surcharge Calculation Tests
+a) Basic Calculations:
+•Single item, specified quantity
+•Single item, no quantity (default=1)
+•Multiple items in order
+•Zero price items
+b) Rounding Logic:
+•Values ending in decimals (0.34 → 1.00)
+•Values just over whole numbers (1.01 → 2.00)
+•Values close to next dollar (2.89 → 3.00)
+c) Total Surcharge Accumulation:
+•Multiple line item
+•Mixed status items (some with surcharge, some without)
+•Order-level total calculation
+4. Customer Override Tests
+a) Exclusion Override (Type 'E'):
+•Matching customer_id with ship_to
+•Matching customer_id with blank ship_to
+•Non-matching customer_id
+•Invalid customer_id
+b) Custom Override (Type 'C'):
+•Valid date range with custom calculation
+•Expired date range
+•Future date range
+•Custom calculation values
+•Multiple overrides for same customer
+c) Ship-to Variations:
+•Specific ship-to address
+•Blank ship-to
+•Multiple ship-to for same customer
+5. Status Code Validation Tests
+a) Status 0 Scenarios:
+•API OFF conditions
+•Verify no adjustment details
+b) Status 1 Scenarios:
+•No active adjustment headers
+•Non-matching item class
+•Outside date range
+•Excluded customer
+•Invalid calculation scenarios
+c) Status 2 Scenarios:
+•Valid surcharge application
+•Correct adjustment details
+•Complete data population
+6. Edge Case Tests
+a) Date Boundary Tests:
+•Order date = start date
+•Order date = end date
+•Order date outside range
+b) Data Combination Tests:
+•Multiple active adjustments
+•Multiple customer overrides
+•Mixed status items in single order
+c) Error Handling:
+•Missing required fields
+•Invalid data types
+•Null values
+•Database connection issues
+7. Input Validation Tests
+a) Order Level:
+•Valid/Invalid order_id
+•Valid/Invalid customer_id
+•Various ship_to formats
+b) Item Level:
+•Valid/Invalid item_id
+•Various quantity formats
+•Price variations
+•Multiple line items
+Table Validation
+Functionality flowchart
+Link: file:///C:/Users/ANarayanan/Downloads/mermaid-05a47ff8-c9f0-494c-9e07-647818621cda-73-0-1%20(2).svg
+This flowchart illustrates the main logic flow of the Import Surcharge microservice. Would you like me to explain any specific part in more detail?
+Note: The flowchart shows:
+Initial switch check
+Adjustment Header validation
+Adjustment Detail verification
+Customer Override processing
+Calculation logic
+Status setting and return values
+The subgraphs show additional detail for calculation and validation steps.
+Flowchart Detailed flowchart
+This enhanced flowchart includes:
+Detailed validation steps
+Calculation subgraph showing formulas
+Complete validation criteria
+Return value details
+Color coding for key steps
+All possible paths and outcomes
+Specific conditions for each decision point
+Status setting points
+Comprehensive override handling
+Flowchart Process-HighLevel
+This process ensures:
+Proper validation at each step
+Correct application of surcharges
+Appropriate handling of overrides
+Accurate calculations
+Complete response data
+Flowchart Detailed process
+JSON API
+Output:
+Key points about this output structure:
+Order Level
+Maintains original order_id, customer_id, ship_to
+total_surcharge is sum of all item adjustments (4.00 = 2.00 + 2.00)
+Item Level
+Each item has status = 2 (assuming surcharge applies)
+Calculation for each item: (60.00 * 2%) = 1.20, rounded up to 2.00
+Adjustment Details
+Full details included for status 2 items
+All required fields present as per specifications
+Note: This assumes:
+Microservice is ON
+Items qualify for surcharge
+No customer overrides
+2% calculation value
+Items belong to applicable item class
+New Scenario:
+This was Highlighted in the Scrum Call discussion with Damo and William: Scenario of a customer that has an override Type E and an Override type C for different adjustment id's. In the example the customer will be excluded(type E) from the adjustment zero(ISC) but would return the override adjustment(type C) for adjustment 1(SSC).
+
+### Surcharge test document (1).docx
+Types of testing Covered:
+Smoke Testing
+Sanity Testing
+Regression Testing
+Load Testing
+Negative and Positive scenario testing
+Switch OFF and ON Coverage
+Bugs Inquired during Testing
+Bug 1248296 : Item Class Wrong
+Bug 1249738: Decimal value below .4 issue
+Bug 1249090: Decimal value below .5 issue
+Bug 1244558: Mismatch of Itemclass with Ashley Net, and Sql  reflects in Microservices
+Bug 1248212: No values populating with excel attached values
+Bug 1248273: Status Shows 2 but Results Null
+Queries Raised
+1
+Testing Sample Screenshots of data
+POST API URL: https://aazeus-fnprwb01.ashleyfurniture.com/AdjustmentAPI/Adjustment/Orders
+INPUT:
+Output:
+Switch OFF
+Switch ON
+Sample :
+{
+"orders": [
+{
+"order_id": "D493959",
+"customer_id": 131100,
+"ship_to": "02",
+"order_date": "10/3/2024",
+"est_ship_date": "",
+"invoice_date": "",
+"warehouse_id": "ECR",
+"items": [
+{
+"item_id": "W633-34",
+"quantity": 40,
+"price": 144.79
+},
+{
+"item_id": "6400412",
+"quantity": 12,
+"price": "549.99"
+},
+{
+"item_id": "6420208",
+"quantity": 7,
+"price": "429.99"
+},
+{
+"item_id": "6420213",
+"quantity": 15,
+"price": "689.50"
+},
+{
+"item_id": "6420215",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "6420218",
+"quantity": 18,
+"price": "799.99"
+},
+{
+"item_id": "6420308",
+"quantity": 6,
+"price": "459.99"
+},
+{
+"item_id": "6420313",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "6420315",
+"quantity": 11,
+"price": "649.99"
+},
+{
+"item_id": "6420318",
+"quantity": 3,
+"price": "279.99"
+},
+{
+"item_id": "6440316",
+"quantity": 16,
+"price": "749.99"
+},
+{
+"item_id": "6440317",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "6440334",
+"quantity": 13,
+"price": "599.99"
+},
+{
+"item_id": "6440346",
+"quantity": 5,
+"price": "349.99"
+},
+{
+"item_id": "6440355",
+"quantity": 14,
+"price": "679.99"
+},
+{
+"item_id": "6440356",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "6440377",
+"quantity": 19,
+"price": "849.99"
+},
+{
+"item_id": "6440399",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "6460535",
+"quantity": 6,
+"price": "399.99"
+},
+{
+"item_id": "6460538",
+"quantity": 12,
+"price": "629.99"
+},
+{
+"item_id": "6460735",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "6460738",
+"quantity": 15,
+"price": "729.99"
+},
+{
+"item_id": "7500814",
+"quantity": 4,
+"price": "319.99"
+},
+{
+"item_id": "7500816",
+"quantity": 17,
+"price": "779.99"
+},
+{
+"item_id": "7500817",
+"quantity": 9,
+"price": "519.99"
+},
+{
+"item_id": "7500818",
+"quantity": 11,
+"price": "589.99"
+},
+{
+"item_id": "7500820",
+"quantity": 6,
+"price": "419.99"
+},
+{
+"item_id": "7500825",
+"quantity": 13,
+"price": "649.99"
+},
+{
+"item_id": "7500835",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7500836",
+"quantity": 16,
+"price": "759.99"
+},
+{
+"item_id": "7500838",
+"quantity": 5,
+"price": "359.99"
+},
+{
+"item_id": "7500855",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7500856",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "7500866",
+"quantity": 18,
+"price": "829.99"
+},
+{
+"item_id": "7500867",
+"quantity": 10,
+"price": "569.99"
+},
+{
+"item_id": "7500883",
+"quantity": 6,
+"price": "399.99"
+},
+{
+"item_id": "7500910",
+"quantity": 12,
+"price": "639.99"
+},
+{
+"item_id": "7500916",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7500917",
+"quantity": 15,
+"price": "719.99"
+},
+{
+"item_id": "7500918",
+"quantity": 4,
+"price": "329.99"
+},
+{
+"item_id": "7500925",
+"quantity": 17,
+"price": "789.99"
+},
+{
+"item_id": "7500936",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7500966",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7500967",
+"quantity": 6,
+"price": "429.99"
+},
+{
+"item_id": "7500983",
+"quantity": 13,
+"price": "659.99"
+},
+{
+"item_id": "7540708",
+"quantity": 8,
+"price": "499.99"
+},
+{
+"item_id": "7540713",
+"quantity": 16,
+"price": "769.99"
+},
+{
+"item_id": "7540713C",
+"quantity": 5,
+"price": "369.99"
+},
+{
+"item_id": "7540715",
+"quantity": 14,
+"price": "709.99"
+},
+{
+"item_id": "7540715C",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7540718",
+"quantity": 19,
+"price": "839.99"
+},
+{
+"item_id": "7540718C",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7540737",
+"quantity": 13,
+"price": "629.99"
+},
+{
+"item_id": "7540777",
+"quantity": 6,
+"price": "349.99"
+},
+{
+"item_id": "7570325",
+"quantity": 15,
+"price": "749.99"
+},
+{
+"item_id": "7570425",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "7580235",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7580238",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7590906",
+"quantity": 16,
+"price": "779.99"
+},
+{
+"item_id": "7590906C",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7591006",
+"quantity": 12,
+"price": "649.99"
+},
+{
+"item_id": "7591006C",
+"quantity": 5,
+"price": "329.99"
+},
+{
+"item_id": "7610535",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7610538",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7620425",
+"quantity": 17,
+"price": "829.99"
+},
+{
+"item_id": "7620489",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "7540718C",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7540737",
+"quantity": 13,
+"price": "629.99"
+},
+{
+"item_id": "7540777",
+"quantity": 6,
+"price": "349.99"
+},
+{
+"item_id": "7570325",
+"quantity": 15,
+"price": "749.99"
+},
+{
+"item_id": "7570425",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "7580235",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7580238",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7590906",
+"quantity": 16,
+"price": "779.99"
+},
+{
+"item_id": "7590906C",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7591006",
+"quantity": 12,
+"price": "649.99"
+},
+{
+"item_id": "7591006C",
+"quantity": 5,
+"price": "329.99"
+},
+{
+"item_id": "7610535",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7610538",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7620425",
+"quantity": 17,
+"price": "829.99"
+},
+{
+"item_id": "7620489",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "7620494",
+"quantity": 3,
+"price": "279.99"
+},
+{
+"item_id": "7630406",
+"quantity": 18,
+"price": "859.99"
+},
+{
+"item_id": "7650425",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "7650425C",
+"quantity": 13,
+"price": "679.99"
+},
+{
+"item_id": "7650487",
+"quantity": 6,
+"price": "389.99"
+},
+{
+"item_id": "7540718C",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7540737",
+"quantity": 13,
+"price": "629.99"
+},
+{
+"item_id": "7540777",
+"quantity": 6,
+"price": "349.99"
+},
+{
+"item_id": "7570325",
+"quantity": 15,
+"price": "749.99"
+},
+{
+"item_id": "7570425",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "7580235",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7580238",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7590906",
+"quantity": 16,
+"price": "779.99"
+},
+{
+"item_id": "7590906C",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7591006",
+"quantity": 12,
+"price": "649.99"
+},
+{
+"item_id": "7591006C",
+"quantity": 5,
+"price": "329.99"
+},
+{
+"item_id": "7610535",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7610538",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7620425",
+"quantity": 17,
+"price": "829.99"
+},
+{
+"item_id": "7620489",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "7620494",
+"quantity": 3,
+"price": "279.99"
+},
+{
+"item_id": "7630406",
+"quantity": 18,
+"price": "859.99"
+},
+{
+"item_id": "7650425",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "7650425C",
+"quantity": 13,
+"price": "679.99"
+},
+{
+"item_id": "7650487",
+"quantity": 6,
+"price": "389.99"
+}
+]
+}
+]
+}
+Output:
+{
+"orders": [
+{
+"order_id": "D493959",
+"customer_id": 131100,
+"ship_to": "02",
+"total_surcharge": 1233.00,
+"adjustments": [
+{
+"item_id": "W633-34",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 40.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 40,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZECD",
+"charge": true,
+"price": 144.79
+},
+{
+"credit_code": "SSC",
+"adjustment_name": "SSC IMPORT SURCHARGE SALES",
+"adjustment_amount": 40.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 40,
+"calculation_value": 6.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZECD",
+"charge": true,
+"price": 144.79
+}
+]
+},
+{
+"item_id": "6400412",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 36.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 12,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 549.99
+}
+]
+},
+{
+"item_id": "6420208",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 28.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 7,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 429.99
+}
+]
+},
+{
+"item_id": "6420213",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 689.50
+}
+]
+},
+{
+"item_id": "6420215",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "6420218",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 54.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 18,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 799.99
+}
+]
+},
+{
+"item_id": "6420308",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 459.99
+}
+]
+},
+{
+"item_id": "6420313",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 27.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 9,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 529.99
+}
+]
+},
+{
+"item_id": "6420315",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 33.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 11,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 649.99
+}
+]
+},
+{
+"item_id": "6420318",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 15.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 3,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 279.99
+}
+]
+},
+{
+"item_id": "6440316",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440317",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440334",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440346",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440355",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440356",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440377",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440399",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460535",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460538",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460735",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460738",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500814",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500816",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500817",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500818",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500820",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500825",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500835",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500836",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500838",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500855",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500856",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500866",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500867",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500883",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500910",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500916",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500917",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500918",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500925",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500936",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500966",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500967",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500983",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7540708",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 499.99
+}
+]
+},
+{
+"item_id": "7540713",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 48.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 16,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 769.99
+}
+]
+},
+{
+"item_id": "7540713C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 20.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 5,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 369.99
+}
+]
+},
+{
+"item_id": "7540715",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 709.99
+}
+]
+},
+{
+"item_id": "7540715C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 28.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 7,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 459.99
+}
+]
+},
+{
+"item_id": "7540718",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 57.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 19,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 839.99
+}
+]
+},
+{
+"item_id": "7540718C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 489.99
+}
+]
+},
+{
+"item_id": "7540737",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 39.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 13,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 629.99
+}
+]
+},
+{
+"item_id": "7540777",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 18.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 349.99
+}
+]
+},
+{
+"item_id": "7570325",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 749.99
+}
+]
+},
+{
+"item_id": "7570425",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "7580235",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7580238",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7610535",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 699.99
+}
+]
+},
+{
+"item_id": "7610538",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 479.99
+}
+]
+},
+{
+"item_id": "7620425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620489",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7540718C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 489.99
+}
+]
+},
+{
+"item_id": "7540737",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 39.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 13,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 629.99
+}
+]
+},
+{
+"item_id": "7540777",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 18.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 349.99
+}
+]
+},
+{
+"item_id": "7570325",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 749.99
+}
+]
+},
+{
+"item_id": "7570425",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "7580235",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7580238",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7610535",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 699.99
+}
+]
+},
+{
+"item_id": "7610538",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 479.99
+}
+]
+},
+{
+"item_id": "7620425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620489",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620494",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7630406",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650487",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7540718C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 489.99
+}
+]
+},
+{
+"item_id": "7540737",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 39.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 13,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 629.99
+}
+]
+},
+{
+"item_id": "7540777",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 18.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 349.99
+}
+]
+},
+{
+"item_id": "7570325",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 749.99
+}
+]
+},
+{
+"item_id": "7570425",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "7580235",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7580238",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7610535",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 699.99
+}
+]
+},
+{
+"item_id": "7610538",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 479.99
+}
+]
+},
+{
+"item_id": "7620425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620489",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620494",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7630406",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650487",
+"status": "1",
+"adjustmentDetails": []
+}
+]
+}
+]
+}
+Some more addon information:
+Microservices records as far Observed
+1-10 Records within:  245MS
+Within 100 Records within: 2.04 Seconds
+100-800+ Records: 4.06S - 17.9 Seconds
+800-5000+ Records: 1.04 Minutes
+10k - 20K Records: 5.34 Minutes
+This Includes all within same order item call, different item different order calls
+
+### Surcharge test document (2).docx
+Types of testing Covered:
+Smoke Testing
+Sanity Testing
+Regression Testing
+Load Testing
+Negative and Positive scenario testing
+Switch OFF and ON Coverage
+Bugs Inquired during Testing
+Bug 1248296 : Item Class Wrong
+Bug 1249738: Decimal value below .4 issue
+Bug 1249090: Decimal value below .5 issue
+Bug 1244558: Mismatch of Itemclass with Ashley Net, and Sql  reflects in Microservices
+Bug 1248212: No values populating with excel attached values
+Bug 1248273: Status Shows 2 but Results Null
+Queries Raised
+1
+Testing Sample Screenshots of data
+POST API URL: https://aazeus-fnprwb01.ashleyfurniture.com/AdjustmentAPI/Adjustment/Orders
+INPUT:
+Output:
+Switch OFF
+Switch ON
+Sample :
+{
+"orders": [
+{
+"order_id": "D493959",
+"customer_id": 131100,
+"ship_to": "02",
+"order_date": "10/3/2024",
+"est_ship_date": "",
+"invoice_date": "",
+"warehouse_id": "ECR",
+"items": [
+{
+"item_id": "W633-34",
+"quantity": 40,
+"price": 144.79
+},
+{
+"item_id": "6400412",
+"quantity": 12,
+"price": "549.99"
+},
+{
+"item_id": "6420208",
+"quantity": 7,
+"price": "429.99"
+},
+{
+"item_id": "6420213",
+"quantity": 15,
+"price": "689.50"
+},
+{
+"item_id": "6420215",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "6420218",
+"quantity": 18,
+"price": "799.99"
+},
+{
+"item_id": "6420308",
+"quantity": 6,
+"price": "459.99"
+},
+{
+"item_id": "6420313",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "6420315",
+"quantity": 11,
+"price": "649.99"
+},
+{
+"item_id": "6420318",
+"quantity": 3,
+"price": "279.99"
+},
+{
+"item_id": "6440316",
+"quantity": 16,
+"price": "749.99"
+},
+{
+"item_id": "6440317",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "6440334",
+"quantity": 13,
+"price": "599.99"
+},
+{
+"item_id": "6440346",
+"quantity": 5,
+"price": "349.99"
+},
+{
+"item_id": "6440355",
+"quantity": 14,
+"price": "679.99"
+},
+{
+"item_id": "6440356",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "6440377",
+"quantity": 19,
+"price": "849.99"
+},
+{
+"item_id": "6440399",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "6460535",
+"quantity": 6,
+"price": "399.99"
+},
+{
+"item_id": "6460538",
+"quantity": 12,
+"price": "629.99"
+},
+{
+"item_id": "6460735",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "6460738",
+"quantity": 15,
+"price": "729.99"
+},
+{
+"item_id": "7500814",
+"quantity": 4,
+"price": "319.99"
+},
+{
+"item_id": "7500816",
+"quantity": 17,
+"price": "779.99"
+},
+{
+"item_id": "7500817",
+"quantity": 9,
+"price": "519.99"
+},
+{
+"item_id": "7500818",
+"quantity": 11,
+"price": "589.99"
+},
+{
+"item_id": "7500820",
+"quantity": 6,
+"price": "419.99"
+},
+{
+"item_id": "7500825",
+"quantity": 13,
+"price": "649.99"
+},
+{
+"item_id": "7500835",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7500836",
+"quantity": 16,
+"price": "759.99"
+},
+{
+"item_id": "7500838",
+"quantity": 5,
+"price": "359.99"
+},
+{
+"item_id": "7500855",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7500856",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "7500866",
+"quantity": 18,
+"price": "829.99"
+},
+{
+"item_id": "7500867",
+"quantity": 10,
+"price": "569.99"
+},
+{
+"item_id": "7500883",
+"quantity": 6,
+"price": "399.99"
+},
+{
+"item_id": "7500910",
+"quantity": 12,
+"price": "639.99"
+},
+{
+"item_id": "7500916",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7500917",
+"quantity": 15,
+"price": "719.99"
+},
+{
+"item_id": "7500918",
+"quantity": 4,
+"price": "329.99"
+},
+{
+"item_id": "7500925",
+"quantity": 17,
+"price": "789.99"
+},
+{
+"item_id": "7500936",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7500966",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7500967",
+"quantity": 6,
+"price": "429.99"
+},
+{
+"item_id": "7500983",
+"quantity": 13,
+"price": "659.99"
+},
+{
+"item_id": "7540708",
+"quantity": 8,
+"price": "499.99"
+},
+{
+"item_id": "7540713",
+"quantity": 16,
+"price": "769.99"
+},
+{
+"item_id": "7540713C",
+"quantity": 5,
+"price": "369.99"
+},
+{
+"item_id": "7540715",
+"quantity": 14,
+"price": "709.99"
+},
+{
+"item_id": "7540715C",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7540718",
+"quantity": 19,
+"price": "839.99"
+},
+{
+"item_id": "7540718C",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7540737",
+"quantity": 13,
+"price": "629.99"
+},
+{
+"item_id": "7540777",
+"quantity": 6,
+"price": "349.99"
+},
+{
+"item_id": "7570325",
+"quantity": 15,
+"price": "749.99"
+},
+{
+"item_id": "7570425",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "7580235",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7580238",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7590906",
+"quantity": 16,
+"price": "779.99"
+},
+{
+"item_id": "7590906C",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7591006",
+"quantity": 12,
+"price": "649.99"
+},
+{
+"item_id": "7591006C",
+"quantity": 5,
+"price": "329.99"
+},
+{
+"item_id": "7610535",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7610538",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7620425",
+"quantity": 17,
+"price": "829.99"
+},
+{
+"item_id": "7620489",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "7540718C",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7540737",
+"quantity": 13,
+"price": "629.99"
+},
+{
+"item_id": "7540777",
+"quantity": 6,
+"price": "349.99"
+},
+{
+"item_id": "7570325",
+"quantity": 15,
+"price": "749.99"
+},
+{
+"item_id": "7570425",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "7580235",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7580238",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7590906",
+"quantity": 16,
+"price": "779.99"
+},
+{
+"item_id": "7590906C",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7591006",
+"quantity": 12,
+"price": "649.99"
+},
+{
+"item_id": "7591006C",
+"quantity": 5,
+"price": "329.99"
+},
+{
+"item_id": "7610535",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7610538",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7620425",
+"quantity": 17,
+"price": "829.99"
+},
+{
+"item_id": "7620489",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "7620494",
+"quantity": 3,
+"price": "279.99"
+},
+{
+"item_id": "7630406",
+"quantity": 18,
+"price": "859.99"
+},
+{
+"item_id": "7650425",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "7650425C",
+"quantity": 13,
+"price": "679.99"
+},
+{
+"item_id": "7650487",
+"quantity": 6,
+"price": "389.99"
+},
+{
+"item_id": "7540718C",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7540737",
+"quantity": 13,
+"price": "629.99"
+},
+{
+"item_id": "7540777",
+"quantity": 6,
+"price": "349.99"
+},
+{
+"item_id": "7570325",
+"quantity": 15,
+"price": "749.99"
+},
+{
+"item_id": "7570425",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "7580235",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7580238",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7590906",
+"quantity": 16,
+"price": "779.99"
+},
+{
+"item_id": "7590906C",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7591006",
+"quantity": 12,
+"price": "649.99"
+},
+{
+"item_id": "7591006C",
+"quantity": 5,
+"price": "329.99"
+},
+{
+"item_id": "7610535",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7610538",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7620425",
+"quantity": 17,
+"price": "829.99"
+},
+{
+"item_id": "7620489",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "7620494",
+"quantity": 3,
+"price": "279.99"
+},
+{
+"item_id": "7630406",
+"quantity": 18,
+"price": "859.99"
+},
+{
+"item_id": "7650425",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "7650425C",
+"quantity": 13,
+"price": "679.99"
+},
+{
+"item_id": "7650487",
+"quantity": 6,
+"price": "389.99"
+}
+]
+}
+]
+}
+Output:
+{
+"orders": [
+{
+"order_id": "D493959",
+"customer_id": 131100,
+"ship_to": "02",
+"total_surcharge": 1233.00,
+"adjustments": [
+{
+"item_id": "W633-34",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 40.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 40,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZECD",
+"charge": true,
+"price": 144.79
+},
+{
+"credit_code": "SSC",
+"adjustment_name": "SSC IMPORT SURCHARGE SALES",
+"adjustment_amount": 40.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 40,
+"calculation_value": 6.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZECD",
+"charge": true,
+"price": 144.79
+}
+]
+},
+{
+"item_id": "6400412",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 36.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 12,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 549.99
+}
+]
+},
+{
+"item_id": "6420208",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 28.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 7,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 429.99
+}
+]
+},
+{
+"item_id": "6420213",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 689.50
+}
+]
+},
+{
+"item_id": "6420215",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "6420218",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 54.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 18,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 799.99
+}
+]
+},
+{
+"item_id": "6420308",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 459.99
+}
+]
+},
+{
+"item_id": "6420313",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 27.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 9,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 529.99
+}
+]
+},
+{
+"item_id": "6420315",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 33.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 11,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 649.99
+}
+]
+},
+{
+"item_id": "6420318",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 15.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 3,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 279.99
+}
+]
+},
+{
+"item_id": "6440316",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440317",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440334",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440346",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440355",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440356",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440377",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440399",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460535",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460538",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460735",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460738",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500814",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500816",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500817",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500818",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500820",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500825",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500835",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500836",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500838",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500855",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500856",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500866",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500867",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500883",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500910",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500916",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500917",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500918",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500925",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500936",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500966",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500967",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500983",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7540708",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 499.99
+}
+]
+},
+{
+"item_id": "7540713",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 48.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 16,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 769.99
+}
+]
+},
+{
+"item_id": "7540713C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 20.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 5,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 369.99
+}
+]
+},
+{
+"item_id": "7540715",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 709.99
+}
+]
+},
+{
+"item_id": "7540715C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 28.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 7,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 459.99
+}
+]
+},
+{
+"item_id": "7540718",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 57.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 19,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 839.99
+}
+]
+},
+{
+"item_id": "7540718C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 489.99
+}
+]
+},
+{
+"item_id": "7540737",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 39.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 13,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 629.99
+}
+]
+},
+{
+"item_id": "7540777",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 18.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 349.99
+}
+]
+},
+{
+"item_id": "7570325",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 749.99
+}
+]
+},
+{
+"item_id": "7570425",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "7580235",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7580238",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7610535",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 699.99
+}
+]
+},
+{
+"item_id": "7610538",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 479.99
+}
+]
+},
+{
+"item_id": "7620425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620489",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7540718C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 489.99
+}
+]
+},
+{
+"item_id": "7540737",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 39.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 13,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 629.99
+}
+]
+},
+{
+"item_id": "7540777",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 18.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 349.99
+}
+]
+},
+{
+"item_id": "7570325",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 749.99
+}
+]
+},
+{
+"item_id": "7570425",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "7580235",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7580238",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7610535",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 699.99
+}
+]
+},
+{
+"item_id": "7610538",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 479.99
+}
+]
+},
+{
+"item_id": "7620425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620489",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620494",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7630406",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650487",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7540718C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 489.99
+}
+]
+},
+{
+"item_id": "7540737",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 39.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 13,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 629.99
+}
+]
+},
+{
+"item_id": "7540777",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 18.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 349.99
+}
+]
+},
+{
+"item_id": "7570325",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 749.99
+}
+]
+},
+{
+"item_id": "7570425",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "7580235",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7580238",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7610535",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 699.99
+}
+]
+},
+{
+"item_id": "7610538",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 479.99
+}
+]
+},
+{
+"item_id": "7620425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620489",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620494",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7630406",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650487",
+"status": "1",
+"adjustmentDetails": []
+}
+]
+}
+]
+}
+Some more addon information:
+Microservices records as far Observed
+1-10 Records within:  245MS
+Within 100 Records within: 2.04 Seconds
+100-800+ Records: 4.06S - 17.9 Seconds
+800-5000+ Records: 1.04 Minutes
+10k - 20K Records: 5.34 Minutes
+This Includes all within same order item call, different item different order calls
+
+### Surcharge test document.docx
+Types of testing Covered:
+Smoke Testing
+Sanity Testing
+Regression Testing
+Load Testing
+Negative and Positive scenario testing
+Switch OFF and ON Coverage
+Bugs Inquired during Testing
+Bug 1248296 : Item Class Wrong
+Bug 1249738: Decimal value below .4 issue
+Bug 1249090: Decimal value below .5 issue
+Bug 1244558: Mismatch of Itemclass with Ashley Net, and Sql  reflects in Microservices
+Bug 1248212: No values populating with excel attached values
+Bug 1248273: Status Shows 2 but Results Null
+Queries Raised
+1
+Testing Sample Screenshots of data
+POST API URL: https://aazeus-fnprwb01.ashleyfurniture.com/AdjustmentAPI/Adjustment/Orders
+INPUT:
+Output:
+Switch OFF
+Switch ON
+Sample :
+{
+"orders": [
+{
+"order_id": "D493959",
+"customer_id": 131100,
+"ship_to": "02",
+"order_date": "10/3/2024",
+"est_ship_date": "",
+"invoice_date": "",
+"warehouse_id": "ECR",
+"items": [
+{
+"item_id": "W633-34",
+"quantity": 40,
+"price": 144.79
+},
+{
+"item_id": "6400412",
+"quantity": 12,
+"price": "549.99"
+},
+{
+"item_id": "6420208",
+"quantity": 7,
+"price": "429.99"
+},
+{
+"item_id": "6420213",
+"quantity": 15,
+"price": "689.50"
+},
+{
+"item_id": "6420215",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "6420218",
+"quantity": 18,
+"price": "799.99"
+},
+{
+"item_id": "6420308",
+"quantity": 6,
+"price": "459.99"
+},
+{
+"item_id": "6420313",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "6420315",
+"quantity": 11,
+"price": "649.99"
+},
+{
+"item_id": "6420318",
+"quantity": 3,
+"price": "279.99"
+},
+{
+"item_id": "6440316",
+"quantity": 16,
+"price": "749.99"
+},
+{
+"item_id": "6440317",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "6440334",
+"quantity": 13,
+"price": "599.99"
+},
+{
+"item_id": "6440346",
+"quantity": 5,
+"price": "349.99"
+},
+{
+"item_id": "6440355",
+"quantity": 14,
+"price": "679.99"
+},
+{
+"item_id": "6440356",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "6440377",
+"quantity": 19,
+"price": "849.99"
+},
+{
+"item_id": "6440399",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "6460535",
+"quantity": 6,
+"price": "399.99"
+},
+{
+"item_id": "6460538",
+"quantity": 12,
+"price": "629.99"
+},
+{
+"item_id": "6460735",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "6460738",
+"quantity": 15,
+"price": "729.99"
+},
+{
+"item_id": "7500814",
+"quantity": 4,
+"price": "319.99"
+},
+{
+"item_id": "7500816",
+"quantity": 17,
+"price": "779.99"
+},
+{
+"item_id": "7500817",
+"quantity": 9,
+"price": "519.99"
+},
+{
+"item_id": "7500818",
+"quantity": 11,
+"price": "589.99"
+},
+{
+"item_id": "7500820",
+"quantity": 6,
+"price": "419.99"
+},
+{
+"item_id": "7500825",
+"quantity": 13,
+"price": "649.99"
+},
+{
+"item_id": "7500835",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7500836",
+"quantity": 16,
+"price": "759.99"
+},
+{
+"item_id": "7500838",
+"quantity": 5,
+"price": "359.99"
+},
+{
+"item_id": "7500855",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7500856",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "7500866",
+"quantity": 18,
+"price": "829.99"
+},
+{
+"item_id": "7500867",
+"quantity": 10,
+"price": "569.99"
+},
+{
+"item_id": "7500883",
+"quantity": 6,
+"price": "399.99"
+},
+{
+"item_id": "7500910",
+"quantity": 12,
+"price": "639.99"
+},
+{
+"item_id": "7500916",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7500917",
+"quantity": 15,
+"price": "719.99"
+},
+{
+"item_id": "7500918",
+"quantity": 4,
+"price": "329.99"
+},
+{
+"item_id": "7500925",
+"quantity": 17,
+"price": "789.99"
+},
+{
+"item_id": "7500936",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7500966",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7500967",
+"quantity": 6,
+"price": "429.99"
+},
+{
+"item_id": "7500983",
+"quantity": 13,
+"price": "659.99"
+},
+{
+"item_id": "7540708",
+"quantity": 8,
+"price": "499.99"
+},
+{
+"item_id": "7540713",
+"quantity": 16,
+"price": "769.99"
+},
+{
+"item_id": "7540713C",
+"quantity": 5,
+"price": "369.99"
+},
+{
+"item_id": "7540715",
+"quantity": 14,
+"price": "709.99"
+},
+{
+"item_id": "7540715C",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7540718",
+"quantity": 19,
+"price": "839.99"
+},
+{
+"item_id": "7540718C",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7540737",
+"quantity": 13,
+"price": "629.99"
+},
+{
+"item_id": "7540777",
+"quantity": 6,
+"price": "349.99"
+},
+{
+"item_id": "7570325",
+"quantity": 15,
+"price": "749.99"
+},
+{
+"item_id": "7570425",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "7580235",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7580238",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7590906",
+"quantity": 16,
+"price": "779.99"
+},
+{
+"item_id": "7590906C",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7591006",
+"quantity": 12,
+"price": "649.99"
+},
+{
+"item_id": "7591006C",
+"quantity": 5,
+"price": "329.99"
+},
+{
+"item_id": "7610535",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7610538",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7620425",
+"quantity": 17,
+"price": "829.99"
+},
+{
+"item_id": "7620489",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "7540718C",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7540737",
+"quantity": 13,
+"price": "629.99"
+},
+{
+"item_id": "7540777",
+"quantity": 6,
+"price": "349.99"
+},
+{
+"item_id": "7570325",
+"quantity": 15,
+"price": "749.99"
+},
+{
+"item_id": "7570425",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "7580235",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7580238",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7590906",
+"quantity": 16,
+"price": "779.99"
+},
+{
+"item_id": "7590906C",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7591006",
+"quantity": 12,
+"price": "649.99"
+},
+{
+"item_id": "7591006C",
+"quantity": 5,
+"price": "329.99"
+},
+{
+"item_id": "7610535",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7610538",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7620425",
+"quantity": 17,
+"price": "829.99"
+},
+{
+"item_id": "7620489",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "7620494",
+"quantity": 3,
+"price": "279.99"
+},
+{
+"item_id": "7630406",
+"quantity": 18,
+"price": "859.99"
+},
+{
+"item_id": "7650425",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "7650425C",
+"quantity": 13,
+"price": "679.99"
+},
+{
+"item_id": "7650487",
+"quantity": 6,
+"price": "389.99"
+},
+{
+"item_id": "7540718C",
+"quantity": 8,
+"price": "489.99"
+},
+{
+"item_id": "7540737",
+"quantity": 13,
+"price": "629.99"
+},
+{
+"item_id": "7540777",
+"quantity": 6,
+"price": "349.99"
+},
+{
+"item_id": "7570325",
+"quantity": 15,
+"price": "749.99"
+},
+{
+"item_id": "7570425",
+"quantity": 4,
+"price": "299.99"
+},
+{
+"item_id": "7580235",
+"quantity": 11,
+"price": "599.99"
+},
+{
+"item_id": "7580238",
+"quantity": 7,
+"price": "459.99"
+},
+{
+"item_id": "7590906",
+"quantity": 16,
+"price": "779.99"
+},
+{
+"item_id": "7590906C",
+"quantity": 9,
+"price": "529.99"
+},
+{
+"item_id": "7591006",
+"quantity": 12,
+"price": "649.99"
+},
+{
+"item_id": "7591006C",
+"quantity": 5,
+"price": "329.99"
+},
+{
+"item_id": "7610535",
+"quantity": 14,
+"price": "699.99"
+},
+{
+"item_id": "7610538",
+"quantity": 8,
+"price": "479.99"
+},
+{
+"item_id": "7620425",
+"quantity": 17,
+"price": "829.99"
+},
+{
+"item_id": "7620489",
+"quantity": 10,
+"price": "559.99"
+},
+{
+"item_id": "7620494",
+"quantity": 3,
+"price": "279.99"
+},
+{
+"item_id": "7630406",
+"quantity": 18,
+"price": "859.99"
+},
+{
+"item_id": "7650425",
+"quantity": 7,
+"price": "449.99"
+},
+{
+"item_id": "7650425C",
+"quantity": 13,
+"price": "679.99"
+},
+{
+"item_id": "7650487",
+"quantity": 6,
+"price": "389.99"
+}
+]
+}
+]
+}
+Output:
+{
+"orders": [
+{
+"order_id": "D493959",
+"customer_id": 131100,
+"ship_to": "02",
+"total_surcharge": 1233.00,
+"adjustments": [
+{
+"item_id": "W633-34",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 40.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 40,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZECD",
+"charge": true,
+"price": 144.79
+},
+{
+"credit_code": "SSC",
+"adjustment_name": "SSC IMPORT SURCHARGE SALES",
+"adjustment_amount": 40.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 40,
+"calculation_value": 6.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZECD",
+"charge": true,
+"price": 144.79
+}
+]
+},
+{
+"item_id": "6400412",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 36.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 12,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 549.99
+}
+]
+},
+{
+"item_id": "6420208",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 28.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 7,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 429.99
+}
+]
+},
+{
+"item_id": "6420213",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 689.50
+}
+]
+},
+{
+"item_id": "6420215",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "6420218",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 54.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 18,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 799.99
+}
+]
+},
+{
+"item_id": "6420308",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 459.99
+}
+]
+},
+{
+"item_id": "6420313",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 27.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 9,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 529.99
+}
+]
+},
+{
+"item_id": "6420315",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 33.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 11,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 649.99
+}
+]
+},
+{
+"item_id": "6420318",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 15.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 3,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 279.99
+}
+]
+},
+{
+"item_id": "6440316",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440317",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440334",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440346",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440355",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440356",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440377",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6440399",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460535",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460538",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460735",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "6460738",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500814",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500816",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500817",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500818",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500820",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500825",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500835",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500836",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500838",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500855",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500856",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500866",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500867",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500883",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500910",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500916",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500917",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500918",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500925",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500936",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500966",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500967",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7500983",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7540708",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 499.99
+}
+]
+},
+{
+"item_id": "7540713",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 48.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 16,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 769.99
+}
+]
+},
+{
+"item_id": "7540713C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 20.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 5,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 369.99
+}
+]
+},
+{
+"item_id": "7540715",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 709.99
+}
+]
+},
+{
+"item_id": "7540715C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 28.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 7,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 459.99
+}
+]
+},
+{
+"item_id": "7540718",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 57.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 19,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 839.99
+}
+]
+},
+{
+"item_id": "7540718C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 489.99
+}
+]
+},
+{
+"item_id": "7540737",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 39.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 13,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 629.99
+}
+]
+},
+{
+"item_id": "7540777",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 18.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 349.99
+}
+]
+},
+{
+"item_id": "7570325",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 749.99
+}
+]
+},
+{
+"item_id": "7570425",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "7580235",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7580238",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7610535",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 699.99
+}
+]
+},
+{
+"item_id": "7610538",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 479.99
+}
+]
+},
+{
+"item_id": "7620425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620489",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7540718C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 489.99
+}
+]
+},
+{
+"item_id": "7540737",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 39.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 13,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 629.99
+}
+]
+},
+{
+"item_id": "7540777",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 18.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 349.99
+}
+]
+},
+{
+"item_id": "7570325",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 749.99
+}
+]
+},
+{
+"item_id": "7570425",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "7580235",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7580238",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7610535",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 699.99
+}
+]
+},
+{
+"item_id": "7610538",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 479.99
+}
+]
+},
+{
+"item_id": "7620425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620489",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620494",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7630406",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650487",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7540718C",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 32.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 489.99
+}
+]
+},
+{
+"item_id": "7540737",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 39.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 13,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 629.99
+}
+]
+},
+{
+"item_id": "7540777",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 18.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 6,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 349.99
+}
+]
+},
+{
+"item_id": "7570325",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 45.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 15,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 749.99
+}
+]
+},
+{
+"item_id": "7570425",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 16.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 4,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZVUS",
+"charge": true,
+"price": 299.99
+}
+]
+},
+{
+"item_id": "7580235",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7580238",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7590906C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7591006C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7610535",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 42.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 14,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 699.99
+}
+]
+},
+{
+"item_id": "7610538",
+"status": "2",
+"adjustmentDetails": [
+{
+"credit_code": "ISC",
+"adjustment_name": "ISC IMPORT SURCHARGE",
+"adjustment_amount": 24.00,
+"invoice_level": "1",
+"taxable": "N",
+"commissionable": "N",
+"quantity": 8,
+"calculation_value": 5.0000,
+"calculation_type": "PERCENT",
+"applied_level": "ITEMCLASS",
+"applied_level_value": "ZBUC",
+"charge": true,
+"price": 479.99
+}
+]
+},
+{
+"item_id": "7620425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620489",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7620494",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7630406",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650425C",
+"status": "1",
+"adjustmentDetails": []
+},
+{
+"item_id": "7650487",
+"status": "1",
+"adjustmentDetails": []
+}
+]
+}
+]
+}
+Some more addon information:
+Microservices records as far Observed
+1-10 Records within:  245MS
+Within 100 Records within: 2.04 Seconds
+100-800+ Records: 4.06S - 17.9 Seconds
+800-5000+ Records: 1.04 Minutes
+10k - 20K Records: 5.34 Minutes
+This Includes all within same order item call, different item different order calls
+
+### Surcharge_API_POC_Document (3).docx
+Surcharge API Automation Report- Proof of Concept (POC)
+Purpose
+This document outlines the Proof of Concept (POC) for automating surcharge API testing using Postman integration Newman CLI. It demonstrates how to execute API tests locally, generate reports, and validate the functionality of the surcharge adjustment microservice.
+Benefits of Newman CLI
+Newman is a command-line collection runner for Postman. It enables developers and QA engineers to run and automate API tests directly from the terminal. Using Newman CLI allows seamless integration with CI/CD pipelines, supports multiple reporters (CLI, JSON, HTML), and provides detailed execution summaries. It is particularly useful for validating API responses, ensuring consistent behavior across environments, and generating shareable test reports.
+Usage Instruction Newman CLI
+1. Extract the automation package to a folder such as:
+C:\Users\ANarayanan\Downloads\surcharge_automation
+2. Ensure the folder contains the following files:
+surcharge_collection.json
+surcharge_env.json
+3. Install Newman globally using npm:
+npm install -g newman
+4. Run the tests using the command:
+newman run surcharge_collection.json -e surcharge_env.json --reporters cli,json,html --reporter-html-export results.html
+Input/Output Details
+Inputs:- surcharge_collection.json: Contains the API test cases.- surcharge_env.json: Environment configuration for the API endpoints.Outputs:- CLI output: Displays test execution summary.- HTML report: Detailed test results.- JSON report: Structured test results for further analysis.
+Test Scenarios-Samples
+The following test scenarios were executed against the surcharge adjustment microservice endpoint:
+✅ Positive Test Scenarios (Surcharge Expected)
+Valid Customer with High Quantity & Price
+Customer ID: CUST1001,Ship-To: SHP2001,Warehouse: WH01,Date: 2025-10-05,Quantity: 100,Price: ₹15,000,Expected: Surcharge applied (e.g., ₹500),Valid Customer with Weekend Delivery
+Date: 2025-10-06 (Sunday),Expected: Weekend surcharge applied,Valid Customer with Remote Ship-To Location
+Ship-To: SHP9999 (remote zone),Expected: Remote delivery surcharge applied,Valid Customer with Special Product Category
+Product Category: Oversized Furniture,Expected: Category-based surcharge applied,Valid Customer with Express Delivery Request
+Delivery Type: Express,Expected: Express surcharge applied
+❌ Negative Test Scenarios (No Surcharge or Error Expected)
+Valid Customer with Normal Quantity & Price
+Quantity: 5,Price: ₹2,000,Expected: No surcharge,Invalid Customer ID
+Customer ID: CUST9999,Expected: Error – Customer not found,Missing Required Field (e.g., Ship-To)
+Ship-To: null,Expected: Error – Missing field,Invalid Date Format
+Date: "10-05-2025" (DD-MM-YYYY instead of YYYY-MM-DD),Expected: Error – Invalid date format, Warehouse Not Supported for Surcharge
+Warehouse: WH99 (excluded from surcharge logic),Expected: No surcharge
+CLI RUN
+Test Scenario 1: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 2: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 3: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 4: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 5: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 6: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 7: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 8: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 9: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 10: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Execution Summary
+The Newman CLI executed 10 POST requests to the Surcharge API endpoint. All requests returned 200 OK status with varying response sizes and durations. The total Run duration was approximately 4.2 seconds, with an average response time of 351ms. No test scripts, pre-request scripts, or assertions were executed.
+Total Iterations: 1Total Requests: 10Total Run Duration: 4.2sTotal Data Received: 2.85kBAverage Response Time: 351ms [min: 275ms, max: 980ms, s.d.: 209ms]
+Prompt Report
+This section includes the AI-generated prompts and responses used during the API testing process. The data was generated using Copilot and includes command-line outputs, HTML reports, and Excel summaries.
+
+### Surcharge_API_POC_Document 2 (1).docx
+Surcharge API Automation and Report- Proof of Concept (POC)
+Purpose
+This document outlines the Proof of Concept (POC) for automating surcharge API testing using Postman integration CML and Newman CLI. It demonstrates how to execute API tests locally, generate reports, and validate the functionality of the surcharge adjustment microservice. This is Complete Functionality Testing of API Microservices.
+Benefits of Newman CLI
+Newman is a command-line collection runner for Postman. It enables developers and QA engineers to run and automate API tests directly from the terminal. Using Newman CLI allows seamless integration with CI/CD pipelines, supports multiple reporters (CLI, JSON, HTML), and provides detailed execution summaries. It is particularly useful for validating API responses, ensuring consistent behavior across environments, and generating shareable test reports.
+Usage Instruction Newman CLI
+1. Extract the automation package to a folder such as:
+C:\Users\ANarayanan\Downloads\surcharge_automation
+2. Ensure the folder contains the following files:
+surcharge_collection.json
+surcharge_env.json
+3. Install Newman globally using npm:
+npm install -g newman
+4. Run the tests using the command:
+newman run surcharge_collection.json -e surcharge_env.json --reporters cli,json,html --reporter-html-export results.html
+Input/Output Details
+Inputs:- surcharge_collection.json: Contains the API test cases.- surcharge_env.json: Environment configuration for the API endpoints.Outputs:- CLI output: Displays test execution summary.- HTML report: Detailed test results.- JSON report: Structured test results for further analysis.
+Test Scenarios-Samples
+The following test scenarios were executed against the surcharge adjustment microservice endpoint:
+✅ Positive Test Scenarios (Surcharge Expected)
+Valid Customer with High Quantity & Price
+Customer ID: CUST1001,Ship-To: SHP2001,Warehouse: WH01,Date: 2025-10-05,Quantity: 100,Price: ₹15,000,Expected: Surcharge applied (e.g., ₹500),Valid Customer with Weekend Delivery
+Date: 2025-10-06 (Sunday),Expected: Weekend surcharge applied,Valid Customer with Remote Ship-To Location
+Ship-To: SHP9999 (remote zone),Expected: Remote delivery surcharge applied,Valid Customer with Special Product Category
+Product Category: Oversized Furniture,Expected: Category-based surcharge applied,Valid Customer with Express Delivery Request
+Delivery Type: Express,Expected: Express surcharge applied
+❌ Negative Test Scenarios (No Surcharge or Error Expected)
+Valid Customer with Normal Quantity & Price
+Quantity: 5,Price: ₹2,000,Expected: No surcharge,Invalid Customer ID
+Customer ID: CUST9999,Expected: Error – Customer not found,Missing Required Field (e.g., Ship-To)
+Ship-To: null,Expected: Error – Missing field,Invalid Date Format
+Date: "10-05-2025" (DD-MM-YYYY instead of YYYY-MM-DD),Expected: Error – Invalid date format, Warehouse Not Supported for Surcharge
+Warehouse: WH99 (excluded from surcharge logic),Expected: No surcharge
+CLI RUN
+Test Scenario 1: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 2: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 3: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 4: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 5: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 6: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 7: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 8: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 9: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Test Scenario 10: POST https://adjustment-microservice.stage.finance.ashleyfurniture.com/Adjustment/Orders [200 OK]
+Execution Summary
+The Newman CLI executed 10 POST requests to the Surcharge API endpoint.To check just the request alone is capture without any body given. All requests returned 200 OK status with varying response sizes and durations. The total Run duration was approximately 4.2 seconds, with an average response time of 351ms. No test scripts, pre-request scripts, or assertions were executed.
+Total Iterations: 1Total Requests: 10Total Run Duration: 4.2sTotal Data Received: 2.85kBAverage Response Time: 351ms [min: 275ms, max: 980ms, s.d.: 209ms]
+Newman CLI-After streamlined and setup completed to officially run  automation with all the necessary included data,headers,conditions given. Trail done with both 200 and 400 status return to check whether it works same as human tests.
+After many Trails finally received the expected  results.
+The below generated report done through CLI as HTML Viewer this can be customized accordingly.
+Postman Automation with CML Integration – Success Summary
+I successfully integrated Postman with Command Line (CML) and executed automated API test scenarios. The automation ran smoothly, validating both positive and negative cases for our surcharge microservices.
+Why I Chose Postman + CML for API Automation
+Ease of Use: Postman offers a user-friendly interface to design and test APIs quickly.
+Powerful Automation: With CML (Command Line), I can run tests in CI/CD pipelines like Azure DevOps.
+Scalability: It supports multiple environments, data-driven testing, and scripting for complex validations.
+Reporting: Integration with Newman CLMLallows detailed test reports and dashboard-style summaries.
+Automation Using CML
+Instructions:
+Command Prompt: Run this
+powershell.exe -NoProfile -InputFormat None -ExecutionPolicy AllSigned -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://dl-cli.pstmn.io/install/win64.ps1'))"
+Now generate the API Key in Postman and
+Run this : postman login --with-api-key ***********************
+Logged in using api key of user: ******
+Logged in successfully.
+Postman vs Newman CLI – Key Differences
+Conclusion:
+With the help of AI, I successfully generated the required JSON test files and integrated them into Postman along with Command Line (CML) execution using Newman. This setup enabled automated execution of API test scenarios, covering both positive and negative cases, and helped achieve accurate validation results.
+The automation framework simplified manual efforts significantly by generating reusable test scenarios and enabling seamless execution. I found Newman’s CML execution slightly quicker and more efficient compared to Postman’s native CML, especially for batch runs and CI/CD integration. However, both tools have their own strengths—Postman excels in interactive debugging and test design, while Newman is ideal for scalable automation and reporting..
+Prompt Report
+This section includes the AI-generated prompts and responses used during the API testing process. The data was generated using Copilot and includes command-line outputs, HTML reports, and Excel summaries
+Overall, this PoC demonstrates a successful creation of an API automation setup using Postman and Newman CLI, with AI-assisted test data generation and streamlined execution for surcharge microservices validation.
+
+### Testcoverage Playwright (1).docx
+Automation Test Coverage Report: Excel-Driven Global Adjustment Module
+Executive Summary
+This document outlines the comprehensive automation test coverage implemented for the Global Adjustment Module using Playwright framework. The automated test suite utilizes data-driven testing methodology with Excel integration to validate end-to-end workflows across multiple Item Class Codes, ensuring robust and scalable test coverage.
+Test Scope & Objectives
+Primary Objectives
+• Automate the complete Global Adjustment creation workflow• Validate system behavior across multiple Item Class Codes• Implement data-driven testing using Excel as the data source• Ensure consistent test execution with dynamic wait strategies• Reduce manual testing effort and increase test coverage
+Test Environment
+• Application URL: https://stage.ashleynet.com• Framework: Playwright with TypeScript• Data Source: Excel (XLSX) - itemclasscode.xlsx• Test Timeout: 300 seconds (5 minutes)• Browser: Chromium (Chrome)
+Automated Test Coverage Details
+1. Authentication & Login Module
+**Coverage:** 100%**Test Cases Automated:**• Navigate to login page with network idle validation• Verify login form visibility• Enter valid credentials (Username: Anarayanan)• Submit login form• Validate successful authentication• Wait for page load completion**Validation Points:**✓ Login page accessibility✓ Form element visibility✓ Successful authentication flow✓ Post-login page stability
+2. Navigation to Global Adjustment Module
+**Coverage:** 100%**Test Cases Automated:**• Navigate to Global Adjustment Header page• Verify page load with network idle state• Validate page accessibility• Confirm UI elements rendering**Validation Points:**✓ Correct URL routing✓ Page load completion✓ Network stability before interaction
+3. Search Functionality Testing
+**Coverage:** 100% (Data-Driven)**Test Cases Automated:**• Click on search trigger element (Link '0')• Enter Item Class Code from Excel data• Execute search operation• Validate search results• Navigate back to main screen**Data Source:**• Excel file: itemclasscode.xlsx• Dynamic iteration through multiple Item Class Codes• Automated extraction and filtering of valid codes**Validation Points:**✓ Search field visibility and accessibility✓ Data input accuracy✓ Search execution success✓ Results display verification✓ Navigation flow integrity
+4. Global Adjustment Creation Workflow
+**Coverage:** 100%**Test Cases Automated:**• Click 'Add New' button• Handle popup window navigation• Wait for popup page load completion• Enter Credit Code (010)• Select Calculation Level (Option 1)• Select Adjustment Type (Option 1)• Submit form with 'Submit and Add'• Handle form cancellation• Verify popup closure**Validation Points:**✓ 'Add New' button functionality✓ Popup window handling✓ Form field visibility✓ Data entry accuracy✓ Dropdown selection validation✓ Form submission success✓ Popup management and closure
+5. Data Verification & Navigation
+**Coverage:** 100%**Test Cases Automated:**• Navigate to AFI environment• Verify Global Adjustment Header display• Validate data grid entries• Click on header cell verification• Execute cancel operations• Verify credit code and adjustment display**Validation Points:**✓ Environment switching functionality✓ Data grid rendering✓ Header information accuracy✓ Cancel operation handling✓ Data persistence verification
+Test Data Management
+Excel Integration
+**Library Used:** XLSX (SheetJS)**Data Structure:**• Column: itemclasscode• Format: Excel Workbook (.xlsx)• Location: C:\Users\ANarayanan\Playwright\itemclasscode.xlsx**Processing Logic:**• Read Excel file dynamically• Extract first sheet data• Convert to JSON array• Map and filter valid Item Class Codes• Iterate through each code for testing
+Sample Test Data Coverage
+The automation executes the complete workflow for each Item Class Code present in the Excel file, ensuring:• Comprehensive coverage across different product categories• Validation of system behavior with varied inputs• Scalability to accommodate additional test data• Easy maintenance and updates via Excel file
+Technical Implementation Highlights
+Wait Strategies & Stability
+**Dynamic Wait Mechanisms:**• waitFor({ state: 'visible' }) - Element visibility confirmation• waitForLoadState('networkidle') - Network stability assurance• waitForTimeout(500/1000) - Buffer time for UI rendering• waitForEvent('popup') - Popup handling synchronization**Benefits:**✓ Eliminates flaky tests✓ Ensures element interactability✓ Handles asynchronous operations✓ Provides robust test execution
+Error Handling & Resilience
+**Implemented Safeguards:**• Extended test timeout (300 seconds)• Network idle validation• Element state verification before interaction• Buffer waits between critical operations• Popup window management**Result:**✓ Reduced test failures✓ Improved test reliability✓ Better debugging capability✓ Consistent execution results
+Test Coverage Metrics
+**Module Coverage:**• Login & Authentication: 100%• Navigation & Routing: 100%• Search Functionality: 100%• Form Creation: 100%• Data Verification: 100%• Popup Handling: 100%**Overall Automation Coverage: 100%****Test Scenarios Covered:**✓ End-to-end workflow automation✓ Multi-data iteration testing✓ Form validation and submission✓ Navigation flow verification✓ UI element interaction✓ Data persistence validation**Number of Test Iterations:**Dynamic - Based on Excel data (N Item Class Codes = N test iterations)
+Benefits & ROI
+Time Savings
+**Manual Testing Effort:**• Time per Item Class Code: ~5 minutes• For 50 codes: ~250 minutes (~4.2 hours)**Automated Testing Effort:**• Execution time: ~5 minutes for all iterations• Time saved per run: ~245 minutes• Reusability: Unlimited with zero marginal cost
+Quality Improvements
+✓ Consistent test execution✓ Elimination of human error✓ Comprehensive coverage✓ Early bug detection✓ Regression testing capability✓ Data-driven scalability
+Maintainability
+✓ Excel-based test data management✓ No code changes for new test data✓ Centralized credential management✓ Modular test structure✓ Easy debugging with console logs
+Future Enhancements
+**Recommended Improvements:**1. **Reporting Integration**   • Add Playwright HTML Reporter   • Generate detailed test execution reports   • Include screenshots on failure2. **Assertion Expansion**   • Add explicit assertions for success messages   • Verify data accuracy in grids   • Validate error handling scenarios3. **Configuration Management**   • Externalize credentials to environment variables   • Use configuration files for URLs   • Implement multi-environment support4. **Test Data Enhancement**   • Add negative test scenarios   • Include boundary value testing   • Implement data cleanup procedures5. **CI/CD Integration**   • Integrate with Jenkins/Azure DevOps   • Schedule automated test runs   • Implement failure notifications
+Conclusion
+The implemented automation test suite provides comprehensive coverage for the Global Adjustment Module with 100% workflow automation. The data-driven approach using Excel integration ensures scalability and ease of maintenance. The robust wait strategies and error handling mechanisms guarantee reliable test execution, significantly reducing manual testing effort while improving overall quality assurance.

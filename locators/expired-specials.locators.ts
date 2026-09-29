@@ -1,0 +1,38 @@
+import type { Page } from '@playwright/test';
+
+export const expiredSpecialsLocators = {
+  discountHeading: (page: Page) => page.getByText('Orders with Expired Specials', { exact: true }).first(),
+  environment: (page: Page) => page.locator('#lstEnvironment, select:visible').first(),
+  customerSearch: (page: Page) => page.locator('#txtCustomerSearch').first(),
+  mustShipBySearch: (page: Page) => page.locator('#txtMustShipByDateSearch').first(),
+  approvedEndSearch: (page: Page) => page.locator('#txtApprovedExtensionSearch').first(),
+  discountSearch: (page: Page) => page.locator('#btnSearch, input[value="Search"], button:has-text("Search")').first(),
+  discountGrid: (page: Page) => page.locator('table:visible').filter({ hasText: /Customer|Special|Must Ship By/i }).last(),
+  discountRows: (page: Page) => expiredSpecialsLocators.discountGrid(page).locator('tr:has(input[type="checkbox"]:visible)'),
+  discountSelection: (page: Page) => expiredSpecialsLocators.discountRows(page).locator('input[type="checkbox"]:visible'),
+  update: (page: Page) => page.locator('#btnUpdate, input[value="Update"], button:has-text("Update")').first(),
+  execute: (page: Page) => page.locator('#btnExecute, input[value="Execute"], button:has-text("Execute")').first(),
+  cancel: (page: Page) => page.locator('#btnCancel, input[value="Cancel"], button:has-text("Cancel")').first(),
+
+  deferHeading: (page: Page) => page.getByText('Expired Specials Defer List', { exact: true }).first(),
+  deferSearch: (page: Page) => page.locator('#btnSearch, input[value="Search"], button:has-text("Search")').first(),
+  deferAddNew: (page: Page) => page.locator('#btnSave, input[value="Add New"], button:has-text("Add New")').first(),
+  deferUpdate: (page: Page) => page.locator('#btnUpdate, input[value="Update"], button:has-text("Update")').first(),
+  deferCancel: (page: Page) => page.locator('#btnCancel, input[value="Cancel"], button:has-text("Cancel")').first(),
+  deferGrid: (page: Page) => page.locator('#grdExpSplDeferList, table:visible').filter({ hasText: /Customer|Specials|Approved End Date/i }).last(),
+  deferRows: (page: Page) => expiredSpecialsLocators.deferGrid(page).locator('tr:has(input:visible), tr:has(select:visible)'),
+  deferEditableInputs: (page: Page) => expiredSpecialsLocators.deferRows(page).first().locator('input[type="text"]:visible'),
+
+  newHeading: (page: Page) => page.getByText('Add New', { exact: true }).first(),
+  newCustomer: (page: Page) => page.locator('#txtCustomer').first(),
+  newShipTo: (page: Page) => page.locator('#txtShipTo').first(),
+  newAllShipTo: (page: Page) => page.locator('#chkAllShipTo').first(),
+  newSpecial: (page: Page) => page.locator('#ddlSpecials').first(),
+  newOrder: (page: Page) => page.locator('#txtOrder').first(),
+  newAllOrders: (page: Page) => page.locator('#chkAllOrders').first(),
+  newApprovedEnd: (page: Page) => page.locator('#txtApprovedExtension').first(),
+  newSaveAdd: (page: Page) => page.locator('#btnSaveAndAdd, input[value="Save & Add"]').first(),
+  newSaveClose: (page: Page) => page.locator('#btnSaveAndClose, input[value="Save & Close"]').first(),
+  newCancel: (page: Page) => page.locator('#btnCancel, input[value="Cancel"]').first(),
+  validationMessage: (page: Page) => page.getByText(/required|must enter|please enter|invalid|error/i).first(),
+};

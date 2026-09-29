@@ -1,0 +1,15 @@
+node_modules/
+playwright-report/
+test-results/
+reports/
+screenshots/
+.env
+.env.*
+!.env.example
+*.auth.json
+storage-state/
+auth/
+*.log
+price-code-regression-output.txt
+
+Global/globall.mp4
