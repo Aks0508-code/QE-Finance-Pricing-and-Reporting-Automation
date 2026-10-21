@@ -48,6 +48,14 @@ export class PriceListUpdateQueuePage {
       await priceListUpdateQueueLocators.showAllRows(this.page).count() > 0;
   }
 
+  async hasAuditColumns(): Promise<boolean> {
+    return await priceListUpdateQueueLocators.auditColumns(this.page).count() > 0;
+  }
+
+  async expectAuditColumnsVisible(): Promise<void> {
+    await expect(priceListUpdateQueueLocators.auditColumns(this.page)).toBeVisible();
+  }
+
   async expectRows(): Promise<void> {
     await expect(priceListUpdateQueueLocators.rows(this.page).first()).toBeVisible();
   }

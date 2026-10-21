@@ -107,17 +107,17 @@ export class PriceListMaintenancePage {
   }
 
   async openUploadWorkflow(): Promise<Page> {
-    const popupPromise = this.page.waitForEvent('popup', { timeout: 5_000 }).catch(() => undefined);
+    const popupPromise = this.page.waitForEvent('popup', { timeout: 15_000 }).catch(() => undefined);
     const link = priceListLocators.uploadLinks(this.page).first();
     if (await link.count() > 0) await link.click();
     else await priceListLocators.uploadControl(this.page).click();
     const popup = await popupPromise;
     const target = popup || this.page;
-    await target.waitForLoadState('domcontentloaded').catch(() => undefined);
+    await target.waitForLoadState('domcontentloaded', { timeout: 30_000 }).catch(() => undefined);
     // The popup can land on a session-expired login prompt mid-suite; re-authenticate there
     // instead of timing out waiting for the upload heading that will never appear.
     await new AshleyNetShellPage(target).loginIfRequired();
-    await expect(priceListLocators.uploadHeading(target)).toBeVisible();
+    await expect(priceListLocators.uploadHeading(target)).toBeVisible({ timeout: 30_000 });
     return target;
   }
 
@@ -228,8 +228,13 @@ export class PriceListMaintenancePage {
   }
 
   async expectUploadStatus(target: Page): Promise<void> {
-    await expect(priceListLocators.completion(target)).toBeVisible();
-    await expect(priceListLocators.uploadSummary(target)).toBeVisible();
+    // Upload processing can take longer than the default assertion timeout
+    // on stage; wait for the network to settle before asserting on the
+    // completion text, and allow extra time for the server-side processing
+    // to finish rendering the "Completed 100%" summary.
+    await target.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => undefined);
+    await expect(priceListLocators.completion(target)).toBeVisible({ timeout: 60_000 });
+    await expect(priceListLocators.uploadSummary(target)).toBeVisible({ timeout: 60_000 });
   }
 
   async expectUploadValidationWithoutFile(target: Page): Promise<void> {

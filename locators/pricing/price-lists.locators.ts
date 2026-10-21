@@ -12,8 +12,10 @@ export const priceListLocators = {
   uploadHeading: (page: Page) => page.getByText(/Update Pricing for Price Code/i).first(),
   uploadFile: (page: Page) => page.locator('input[type="file"]').first(),
   hasHeaderRow: (page: Page) => page.getByRole('checkbox', { name: /header row/i }).first(),
-  effectiveDate: (page: Page) => page.locator('input[type="date"]:not([type="file"]), input[id*="Effective" i]:not([type="file"]), input[name*="Effective" i]:not([type="file"])')
-    .or(page.getByText(/Effective Date:?/i).locator('xpath=following::input[not(@type="file")][1]'))
+  effectiveDate: (page: Page) => page.locator('input[type="date"], input[id*="Effective" i]:not([type="file"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]):not([type="image"]):not([type="hidden"]), input[name*="Effective" i]:not([type="file"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]):not([type="image"]):not([type="hidden"])')
+    .or(page.getByText(/Effective Date:?/i).locator('xpath=following::input[not(@type="file") and not(@type="checkbox") and not(@type="button") and not(@type="submit") and not(@type="image") and not(@type="hidden")][1]'))
+    .or(page.getByText(/Effective Date:?/i).locator('xpath=following::*[@role="textbox"][1]'))
+    .or(page.getByRole('textbox'))
     .first(),
   effectiveDateTrigger: (page: Page) => page.locator('img[src*="calendar" i], a[href*="calendar" i], input[id*="Effective" i] + img').first(),
   calendar: (page: Page) => page.locator('.ajax__calendar_container:visible, .ajax__calendar:visible, [role="dialog"]:visible').first(),

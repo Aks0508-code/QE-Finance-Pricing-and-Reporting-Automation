@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { runtimeConfig } from '../../../config/runtime-config';
+import { hasRuntimeCredentials, runtimeConfig } from '../../../config/runtime-config';
 import { priceCodeLocators } from '../../../locators/pricing/price-codes.locators';
 import type {
   PriceCodeExistingUpdateData,
@@ -8,11 +8,67 @@ import type {
 } from '../../../config/price-code-data';
 
 export class PriceCodeMaintenancePage {
-  constructor(private readonly page: Page) {}
+  constructor(private readonly page: Page) {
+    // Accept any native confirm/alert dialogs (e.g. "leave page?" beforeunload prompts
+    // after a mutation, or "are you sure?" confirmations) for the lifetime of this page
+    // object, so navigations and saves during archive/reactivate flows are not silently
+    // aborted by Playwright's default dialog-dismiss behavior.
+    page.on('dialog', (dialog) => { dialog.accept().catch(() => undefined); });
+  }
 
   async goto(): Promise<void> {
     await this.page.goto(runtimeConfig.priceCodesPath, { waitUntil: 'domcontentloaded' });
     await this.page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
+    await this.recoverFromSessionDrop();
+  }
+
+  /**
+   * Long-running mutation/archive suites can outlive the stage AshleyNET
+   * session. When that happens, navigating to Price Codes silently redirects
+   * to the AshleyNET Home page (/SiteHome/Forms/Home.aspx) instead of
+   * returning a 401/login page. Detect that redirect, re-authenticate if a
+   * login prompt is present, and retry the navigation once so a single
+   * mid-run session drop doesn't fail every remaining test.
+   */
+  private async recoverFromSessionDrop(): Promise<void> {
+    if (!/Home\.aspx/i.test(this.page.url())) return;
+
+    const loginPrompt = this.page.getByText('Please Login...', { exact: true });
+    if (await loginPrompt.isVisible({ timeout: 1_500 }).catch(() => false) && hasRuntimeCredentials()) {
+      const textboxes = this.page.getByRole('textbox');
+      await textboxes.nth(0).fill(runtimeConfig.username!);
+      await textboxes.nth(1).fill(runtimeConfig.password!);
+      await this.page.getByRole('button', { name: /login/i }).click();
+      await expect(loginPrompt).toBeHidden({ timeout: 15_000 }).catch(() => undefined);
+    }
+
+    await this.page.goto(runtimeConfig.priceCodesPath, { waitUntil: 'domcontentloaded' });
+    await this.page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
+  }
+
+  /**
+   * Same session-drop recovery as recoverFromSessionDrop(), but for use from
+   * helpers that are already mid-flow on a sub-page (inactive grid, popups)
+   * rather than right after a goto(). Returns true if a session drop was
+   * detected and recovered from (meaning the caller lost its place and must
+   * re-navigate to wherever it was trying to go), false if the session was
+   * fine.
+   */
+  private async recoverIfSessionDropped(target: Page = this.page): Promise<boolean> {
+    if (!/Home\.aspx/i.test(target.url())) return false;
+
+    const loginPrompt = target.getByText('Please Login...', { exact: true });
+    if (await loginPrompt.isVisible({ timeout: 1_500 }).catch(() => false) && hasRuntimeCredentials()) {
+      const textboxes = target.getByRole('textbox');
+      await textboxes.nth(0).fill(runtimeConfig.username!);
+      await textboxes.nth(1).fill(runtimeConfig.password!);
+      await target.getByRole('button', { name: /login/i }).click();
+      await expect(loginPrompt).toBeHidden({ timeout: 15_000 }).catch(() => undefined);
+    }
+
+    await this.page.goto(runtimeConfig.priceCodesPath, { waitUntil: 'domcontentloaded' });
+    await this.page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
+    return true;
   }
 
   async expectLoaded(): Promise<void> {
@@ -63,6 +119,24 @@ export class PriceCodeMaintenancePage {
       });
     }
     await popup.waitForLoadState('domcontentloaded');
+
+    // The Add New popup can also land on the AshleyNET Home page if the
+    // session dropped between opening Price Codes and clicking Add New.
+    // Recover on the main tab, close the stale popup, and retry once.
+    if (await this.recoverIfSessionDropped(popup)) {
+      if (!popup.isClosed()) await popup.close();
+      await this.expectLoaded();
+      const retryPopupPromise = this.page.waitForEvent('popup', { timeout: 5_000 }).catch(() => undefined);
+      await priceCodeLocators.addNew(this.page).click();
+      popup = await retryPopupPromise;
+      if (!popup) {
+        popup = await this.page.context().newPage();
+        await popup.goto(`${runtimeConfig.baseURL}/PriceMaintenance_Net/PriceCodesNew.aspx`, {
+          waitUntil: 'domcontentloaded',
+        });
+      }
+      await popup.waitForLoadState('domcontentloaded');
+    }
     return popup;
   }
 
@@ -240,9 +314,15 @@ export class PriceCodeMaintenancePage {
     }
 
     const reasonPage = await this.openArchiveReasonForPriceCode(code);
-    await priceCodeLocators.continueReasonCode(reasonPage).click();
-    await reasonPage.waitForLoadState('domcontentloaded').catch(() => undefined);
-    await reasonPage.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
+    const acceptDialogs = (dialog: import('@playwright/test').Dialog) => { dialog.accept().catch(() => undefined); };
+    reasonPage.on('dialog', acceptDialogs);
+    try {
+      await priceCodeLocators.continueReasonCode(reasonPage).click();
+      await reasonPage.waitForLoadState('domcontentloaded').catch(() => undefined);
+      await reasonPage.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
+    } finally {
+      reasonPage.off('dialog', acceptDialogs);
+    }
     if (reasonPage !== this.page && !reasonPage.isClosed()) await reasonPage.close();
     await this.page.waitForTimeout(2_000);
     await this.goto();
@@ -265,8 +345,14 @@ export class PriceCodeMaintenancePage {
     }
 
     const reasonPage = await this.openArchiveReasonForPriceCode(code);
-    await priceCodeLocators.cancel(reasonPage).click();
-    await reasonPage.waitForLoadState('domcontentloaded').catch(() => undefined);
+    const acceptDialogs = (dialog: import('@playwright/test').Dialog) => { dialog.accept().catch(() => undefined); };
+    reasonPage.on('dialog', acceptDialogs);
+    try {
+      await priceCodeLocators.cancel(reasonPage).click();
+      await reasonPage.waitForLoadState('domcontentloaded').catch(() => undefined);
+    } finally {
+      reasonPage.off('dialog', acceptDialogs);
+    }
     if (reasonPage !== this.page && !reasonPage.isClosed()) await reasonPage.close();
     await this.goto();
     await this.expectLoaded();
@@ -276,7 +362,28 @@ export class PriceCodeMaintenancePage {
   private async openArchiveReasonForPriceCode(code: string): Promise<Page> {
     await this.goto();
     await this.expectLoaded();
-    const row = await this.findPriceCodeRowByScrolling(code, true);
+    let row: Locator | undefined;
+    for (let attempt = 0; attempt < 5 && !row; attempt += 1) {
+      if (attempt > 0) {
+        // Newly created codes may not be visible in the grid immediately; reload and retry.
+        await this.page.waitForTimeout(3_000);
+        await this.goto();
+        await this.expectLoaded();
+      }
+      row = await this.findPriceCodeRowByScrolling(code, true);
+    }
+    if (!row) {
+      // The code may already be inactive from a prior interrupted run; reactivate it first.
+      await this.openInactiveView();
+      await this.expectInactiveLoaded();
+      const inactiveRow = await this.findPriceCodeRowByScrolling(code);
+      if (inactiveRow) {
+        await this.reactivatePriceCode(code);
+        await this.goto();
+        await this.expectLoaded();
+        row = await this.findPriceCodeRowByScrolling(code, true);
+      }
+    }
     if (row) {
       await row.locator('input[id$="_chkDelete"]').check();
       const popupPromise = this.page.waitForEvent('popup', { timeout: 15_000 }).catch(() => undefined);
@@ -290,20 +397,62 @@ export class PriceCodeMaintenancePage {
     throw new Error(`Created Price Code ${code} was not found for archive cleanup.`);
   }
 
-  private async findPriceCodeRowByScrolling(code: string, requireDeletable = false): Promise<Locator | undefined> {
+  /**
+   * The fixed archive/cancel/continue Price Codes configured via .env can go
+   * stale (removed from stage, or now carrying associated Price Lists, which
+   * disables their delete checkbox). Rather than fail when that happens, scroll
+   * through the active grid and return the first Price Code that currently has
+   * no items attached (i.e. its delete checkbox is enabled), so the archive
+   * lifecycle tests always have a disposable record to work with.
+   */
+  async findAnyDeletableActivePriceCode(): Promise<string> {
+    await this.goto();
+    await this.expectLoaded();
     const hiddenCodes = this.page.locator('#grdCode input[id$="_hdnPriceCode"]');
     let previousSignature = '';
     for (let pass = 0; pass < 80; pass += 1) {
+      const count = await hiddenCodes.count();
+      for (let index = 0; index < count; index += 1) {
+        const hidden = hiddenCodes.nth(index);
+        const row = hidden.locator('xpath=ancestor::tr[1]');
+        const deleteControl = row.locator('input[id$="_chkDelete"]');
+        if (await deleteControl.count() > 0 && await deleteControl.isEnabled().catch(() => false)) {
+          const code = await hidden.inputValue();
+          if (code) return code;
+        }
+      }
       const values = await hiddenCodes.evaluateAll((elements) => elements.map((element) => (
         (element as HTMLInputElement).value
       ))).catch(() => [] as string[]);
-      const matchingIndex = values.indexOf(code);
-      if (matchingIndex >= 0) {
-        const row = hiddenCodes.nth(matchingIndex).locator('xpath=ancestor::tr[1]');
+      if (values.length === 0) break;
+      const signature = values.join('|');
+      if (signature === previousSignature) break;
+      previousSignature = signature;
+      await hiddenCodes.last().scrollIntoViewIfNeeded().catch(() => undefined);
+      await this.page.waitForTimeout(400);
+    }
+    throw new Error('No active Price Code with an enabled delete checkbox (no attached items) was found after scrolling the full grid.');
+  }
+
+  private async findPriceCodeRowByScrolling(code: string, requireDeletable = false): Promise<Locator | undefined> {
+    const hiddenCodes = this.page.locator('#grdCode input[id$="_hdnPriceCode"]');
+    // Target the specific row by its CSS attribute value rather than by numeric index.
+    // The grid virtualizes rows (adds/removes DOM elements while scrolling), so an
+    // index captured from an evaluateAll() snapshot can point at a different row by
+    // the time it's actually used — attribute matching avoids that race entirely.
+    const escapedCode = code.replace(/(["\\])/g, '\\$1');
+    const matchedHiddenInput = this.page.locator(`#grdCode input[id$="_hdnPriceCode"][value="${escapedCode}"]`);
+    let previousSignature = '';
+    for (let pass = 0; pass < 80; pass += 1) {
+      if (await matchedHiddenInput.count() > 0) {
+        const row = matchedHiddenInput.first().locator('xpath=ancestor::tr[1]');
         const deleteControl = row.locator('input[id$="_chkDelete"]');
         if (!requireDeletable || await deleteControl.isEnabled()) return row;
       }
 
+      const values = await hiddenCodes.evaluateAll((elements) => elements.map((element) => (
+        (element as HTMLInputElement).value
+      ))).catch(() => [] as string[]);
       const count = values.length;
       if (count === 0) break;
       const signature = values.join('|');
@@ -333,9 +482,9 @@ export class PriceCodeMaintenancePage {
   }
 
   async expectInactivePriceCodeRow(code: string): Promise<void> {
-    for (let attempt = 0; attempt < 8; attempt += 1) {
+    for (let attempt = 0; attempt < 15; attempt += 1) {
       if (await this.findPriceCodeRowByScrolling(code)) return;
-      await this.page.waitForTimeout(3_000);
+      await this.page.waitForTimeout(5_000);
       await this.goto();
       await this.expectLoaded();
       await this.openInactiveView();
@@ -379,8 +528,14 @@ export class PriceCodeMaintenancePage {
     } else {
       await reactivateControl.click();
     }
-    await priceCodeLocators.save(this.page).click();
-    await this.page.waitForLoadState('domcontentloaded');
+    const acceptDialogs = (dialog: import('@playwright/test').Dialog) => { dialog.accept().catch(() => undefined); };
+    this.page.on('dialog', acceptDialogs);
+    try {
+      await priceCodeLocators.save(this.page).click();
+      await this.page.waitForLoadState('domcontentloaded');
+    } finally {
+      this.page.off('dialog', acceptDialogs);
+    }
 
     await this.goto();
     await this.expectLoaded();
@@ -484,6 +639,14 @@ export class PriceCodeMaintenancePage {
     await priceCodeLocators.viewInactive(this.page).click();
     await this.page.waitForLoadState('domcontentloaded');
     await this.page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+    if (await this.recoverIfSessionDropped()) {
+      // recoverIfSessionDropped() re-authenticated and landed back on the
+      // active grid, not the inactive one we were asked for; retry the click.
+      await this.expectLoaded();
+      await priceCodeLocators.viewInactive(this.page).click();
+      await this.page.waitForLoadState('domcontentloaded');
+      await this.page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+    }
     if (await priceCodeLocators.reasonCodesHeading(this.page).isVisible().catch(() => false)) {
       await priceCodeLocators.continueReasonCode(this.page).click();
       await this.page.waitForLoadState('domcontentloaded');
@@ -527,8 +690,8 @@ export class PriceCodeMaintenancePage {
     const priceCode = priceCodeLocators.priceListLinks(this.page).first();
     await expect(priceCode).toBeVisible();
     await priceCode.click();
-    await this.page.waitForLoadState('domcontentloaded');
-    await expect(this.page).toHaveURL(/PriceList/i);
+    await this.page.waitForLoadState('domcontentloaded', { timeout: 30_000 }).catch(() => undefined);
+    await expect(this.page).toHaveURL(/PriceList/i, { timeout: 30_000 });
   }
 
   /**
@@ -539,13 +702,31 @@ export class PriceCodeMaintenancePage {
   async openPriceListForCode(code: string): Promise<void> {
     await this.goto();
     await this.expectLoaded();
-    const row = await this.findPriceCodeRowByScrolling(code, true);
+    // Opening a Price List only requires the row to exist and expose a Price
+    // List link - it has nothing to do with whether the row is deletable, so
+    // requireDeletable must stay false here (unlike the archive/delete flow).
+    let row = await this.findPriceCodeRowByScrolling(code, false);
+    if (!row) {
+      // Self-heal: a prior mutation test may have archived this code. If it is
+      // sitting in the inactive grid, reactivate it and retry before failing.
+      await this.goto();
+      await this.expectLoaded();
+      await this.openInactiveView();
+      await this.expectInactiveLoaded();
+      const inactiveRow = await this.findPriceCodeRowByScrolling(code);
+      if (inactiveRow && runtimeConfig.mutationEnabled) {
+        await this.reactivatePriceCode(code);
+        await this.goto();
+        await this.expectLoaded();
+        row = await this.findPriceCodeRowByScrolling(code, false);
+      }
+    }
     if (!row) throw new Error(`Price Code ${code} was not found to open its Price List.`);
     const priceListLink = row.locator('a[href*="PriceList"]:visible').first();
     await expect(priceListLink).toBeVisible();
     await priceListLink.click();
-    await this.page.waitForLoadState('domcontentloaded');
-    await expect(this.page).toHaveURL(/PriceList/i);
+    await this.page.waitForLoadState('domcontentloaded', { timeout: 30_000 }).catch(() => undefined);
+    await expect(this.page).toHaveURL(/PriceList/i, { timeout: 30_000 });
   }
 
   async openFirstCustomerAndReturn(): Promise<void> {
@@ -577,28 +758,53 @@ export class PriceCodeMaintenancePage {
     if (!targetCode || targetCode.includes('*')) {
       throw new Error('An explicit approved, non-asterisk Price Code is required for mutation. No data was changed.');
     }
-    const rows = priceCodeLocators.priceCodeRows(this.page);
-    const count = await rows.count();
-    for (let index = 0; index < count; index += 1) {
-      const row = rows.nth(index);
-      const code = await row.locator('input[id$="_hdnPriceCode"]').inputValue();
-      if (code !== targetCode) continue;
 
-      const description = row.locator('input[id$="_txtDescrip"]');
-      const original = await description.inputValue();
-      await description.fill(data.description);
-      await priceCodeLocators.save(this.page).click();
-      await this.page.waitForLoadState('domcontentloaded');
-      await expect(row.locator('input[id$="_txtDescrip"]')).toHaveValue(data.description);
-
-      await row.locator('input[id$="_txtDescrip"]').fill(original);
-      await priceCodeLocators.save(this.page).click();
-      await this.page.waitForLoadState('domcontentloaded');
-      await expect(row.locator('input[id$="_txtDescrip"]')).toHaveValue(original);
-      return;
+    const row = await this.findPriceCodeRowByScrolling(targetCode);
+    if (!row) {
+      throw new Error(`Approved Price Code row not found for mutation data code ${targetCode}. No data was changed.`);
     }
 
-    throw new Error(`Approved Price Code row not found for mutation data code ${targetCode}. No data was changed.`);
+    const description = row.locator('input[id$="_txtDescrip"]');
+    const original = await description.inputValue();
+    await description.fill(data.description);
+    // The grid's onchange="CheckChange(...)" handler is what flags this row as
+    // dirty for the server-side save. Playwright's fill() dispatches an `input`
+    // event but does not blur the field, so the native `change` event (and thus
+    // CheckChange) never fires, and the server silently discards the edit on
+    // save. Dispatch `change` explicitly so the row is marked dirty.
+    await description.dispatchEvent('change');
+    await this.saveAndWaitForReload();
+
+    // The grid can reorder/repaint rows across the save+reload, so re-locate the
+    // row by its price-code value rather than reusing a position-based locator.
+    // The server-side postback can still be settling after networkidle fires, so
+    // re-locate and retry a few times rather than asserting once immediately.
+    let rowAfterSave = await this.findPriceCodeRowByScrolling(targetCode);
+    if (!rowAfterSave) {
+      throw new Error(`Price Code ${targetCode} was not found in the grid after saving the description.`);
+    }
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      if ((await rowAfterSave!.locator('input[id$="_txtDescrip"]').inputValue()) === data.description) break;
+      await this.page.waitForTimeout(1_000);
+      rowAfterSave = (await this.findPriceCodeRowByScrolling(targetCode)) || rowAfterSave;
+    }
+    await expect(rowAfterSave!.locator('input[id$="_txtDescrip"]')).toHaveValue(data.description);
+
+    const descriptionAfterSave = rowAfterSave!.locator('input[id$="_txtDescrip"]');
+    await descriptionAfterSave.fill(original);
+    await descriptionAfterSave.dispatchEvent('change');
+    await this.saveAndWaitForReload();
+
+    let rowAfterRestore = await this.findPriceCodeRowByScrolling(targetCode);
+    for (let attempt = 0; attempt < 5 && rowAfterRestore; attempt += 1) {
+      if ((await rowAfterRestore.locator('input[id$="_txtDescrip"]').inputValue()) === original) break;
+      await this.page.waitForTimeout(1_000);
+      rowAfterRestore = (await this.findPriceCodeRowByScrolling(targetCode)) || rowAfterRestore;
+    }
+    if (!rowAfterRestore) {
+      throw new Error(`Price Code ${targetCode} was not found in the grid after restoring the description.`);
+    }
+    await expect(rowAfterRestore.locator('input[id$="_txtDescrip"]')).toHaveValue(original);
   }
 
   async expectGridCanScrollToLastRow(): Promise<void> {
@@ -739,9 +945,22 @@ export class PriceCodeMaintenancePage {
     expectedBasePrice: boolean,
     code: string,
   ): Promise<void> {
-    const row = priceCodeLocators.priceCodeRows(this.page).filter({
-      has: this.page.locator(`input[id$="_hdnPriceCode"][value="${code}"]`),
-    }).first();
+    let row: Locator | undefined;
+    let matches = false;
+    for (let attempt = 0; attempt < 10 && !matches; attempt += 1) {
+      if (attempt > 0) {
+        // The grid does not always reflect the saved checkbox state right after the
+        // postback; reload and re-scroll to the row before re-checking. Stage can
+        // be slow, so allow a longer backoff between retries.
+        await this.page.waitForTimeout(6_000);
+        await this.goto();
+        await this.expectLoaded();
+      }
+      row = await this.findPriceCodeRowByScrolling(code);
+      if (!row) continue;
+      matches = await row.locator('input[id$="_chkBase"]').isChecked() === expectedBasePrice;
+    }
+    if (!row) throw new Error(`Price Code ${code} was not found while verifying saved values.`);
     await expect(row).toBeVisible();
     await expect(row.locator('select[id$="_lstCatCode"] option:checked')).toHaveText(data.categoryCode);
     const selectedVat = (await row.locator('select[id$="_lstVAT"] option:checked').textContent() || '').trim();
@@ -749,16 +968,16 @@ export class PriceCodeMaintenancePage {
       (data.vatOption.toUpperCase() === 'NO TAX - 0.00' && selectedVat === '');
     expect(vatMatches).toBe(true);
     await expect.poll(
-      async () => await row.locator('input[id$="_chkBase"]').isChecked(),
-      { timeout: 15_000 },
+      async () => await row!.locator('input[id$="_chkBase"]').isChecked(),
+      { timeout: 25_000 },
     ).toBe(expectedBasePrice);
   }
 
   private async saveAndWaitForReload(): Promise<void> {
-    const navigation = this.page.waitForNavigation({ waitUntil: 'domcontentloaded' }).catch(() => undefined);
+    const navigation = this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => undefined);
     await priceCodeLocators.save(this.page).click();
     await navigation;
-    await this.page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+    await this.page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => undefined);
   }
 
   private async restorePriceCodeValues(

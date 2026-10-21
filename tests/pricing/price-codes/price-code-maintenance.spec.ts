@@ -3,7 +3,6 @@ import { join } from 'node:path';
 import { expect, test } from '../../../fixtures/pricing.fixture';
 import {
   getPriceCodeCategoryData,
-  getPriceCodeArchiveCodes,
   getPriceCodeCreateData,
   getPriceCodeDuplicateCode,
   getPriceCodeDuplicateExpectation,
@@ -14,12 +13,10 @@ import {
   getPriceCodeMutationData,
   hasPriceCodeCategoryData,
   hasPriceCodeDuplicateData,
-  hasPriceCodeDescriptionMutationData,
   hasPriceCodeExistingMutationData,
   hasPriceCodeInvalidData,
   hasPriceCodeSearchData,
   hasPriceCodeMutationData,
-  hasPriceCodeArchiveData,
 } from '../../../config/price-code-data';
 import { runtimeConfig } from '../../../config/runtime-config';
 
@@ -141,10 +138,26 @@ test.describe('Price Codes maintenance', () => {
     await priceCodes.cancelUnsavedFirstDescriptionEdit();
   });
 
-  test('@price-code @mutation @regression description can be saved and restored', async ({ priceCodes }) => {
-    test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeDescriptionMutationData(), 'Requires an explicit existing Price Code code and approved mutation data.');
-    await priceCodes.expectLoaded();
-    await priceCodes.editDescriptionSaveAndRestore(getPriceCodeMutationData());
+  test('@price-code @mutation @regression description can be saved and restored', async ({ priceCodes }, testInfo) => {
+    testInfo.setTimeout(8 * 60_000);
+    test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeMutationData(), 'Requires approved create data and mutation authorization.');
+    // The configured existing Price Code (PRICE_CODE_TEST_CODE) is asterisked
+    // in the grid, meaning it has associated Price Lists; AshleyNET silently
+    // discards description edits to asterisked codes on save (confirmed via
+    // network inspection: the postback succeeds with HTTP 200 but the server
+    // does not persist the field). A freshly created, non-asterisk Price Code
+    // is required to exercise the description save/restore flow.
+    const data = getPriceCodeCreateData();
+    let created = false;
+    try {
+      await priceCodes.expectLoaded();
+      await priceCodes.createPriceCode(data);
+      created = true;
+      await priceCodes.expectPriceCodeRow(data.code, data.description);
+      await priceCodes.editDescriptionSaveAndRestore(data);
+    } finally {
+      if (created) await priceCodes.archivePriceCode(data.code).catch(() => undefined);
+    }
   });
 
   test('@price-code @mutation @regression category and VAT persist while base price saves checked then unchecked and restores', async ({ priceCodes }) => {
@@ -153,30 +166,38 @@ test.describe('Price Codes maintenance', () => {
     await priceCodes.updateExistingPriceCode(getPriceCodeExistingUpdateData());
   });
 
-  test('@price-code @e2e @mutation @regression approved Price Code can be archived, found inactive, reactivated, and found active again', async ({ priceCodes }) => {
-    test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeArchiveData(), 'Requires approved archive Price Code data.');
-    const code = getPriceCodeArchiveCodes().archive;
+  test('@price-code @e2e @mutation @regression approved Price Code can be archived, found inactive, reactivated, and found active again', async ({ priceCodes }, testInfo) => {
+    testInfo.setTimeout(30 * 60_000);
+    test.skip(!runtimeConfig.mutationEnabled, 'Price Code mutations are disabled.');
+    // The fixed .env archive code can go stale (removed from stage entirely,
+    // or now carrying attached Price Lists), and merely being configured in
+    // .env does not mean it is still valid on stage. Always discover a
+    // currently-deletable active Price Code by scrolling the live grid so
+    // the test is resilient to stale static configuration.
+    const code = await priceCodes.findAnyDeletableActivePriceCode();
     await priceCodes.expectLoaded();
     await priceCodes.archiveAndReactivatePriceCode(code);
     await priceCodes.expectActivePriceCodeOccursOnce(code);
   });
 
-  test('@price-code @e2e @mutation @archive cancel archive keeps a disposable Price Code active', async ({ priceCodes }) => {
-    test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeArchiveData(), 'Requires approved archive Price Code data.');
-    const code = getPriceCodeArchiveCodes().cancel;
+  test('@price-code @e2e @mutation @archive cancel archive keeps a disposable Price Code active', async ({ priceCodes }, testInfo) => {
+    testInfo.setTimeout(30 * 60_000);
+    test.skip(!runtimeConfig.mutationEnabled, 'Price Code mutations are disabled.');
+    const code = await priceCodes.findAnyDeletableActivePriceCode();
     await priceCodes.cancelArchivePriceCode(code);
     await priceCodes.expectActivePriceCodeOccursOnce(code);
   });
 
-  test('@price-code @e2e @mutation @archive continue archive moves a disposable Price Code to inactive', async ({ priceCodes }) => {
-    test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeArchiveData(), 'Requires approved archive Price Code data.');
-    const code = getPriceCodeArchiveCodes().continue;
+  test('@price-code @e2e @mutation @archive continue archive moves a disposable Price Code to inactive', async ({ priceCodes }, testInfo) => {
+    testInfo.setTimeout(30 * 60_000);
+    test.skip(!runtimeConfig.mutationEnabled, 'Price Code mutations are disabled.');
+    const code = await priceCodes.findAnyDeletableActivePriceCode();
     await priceCodes.archiveAndReactivatePriceCode(code);
     await priceCodes.expectActivePriceCodeOccursOnce(code);
   });
 
   test('@price-code @e2e @mutation @regression create archive reactivate lifecycle completes end to end', async ({ priceCodes }, testInfo) => {
-    testInfo.setTimeout(6 * 60_000);
+    testInfo.setTimeout(30 * 60_000);
     test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeMutationData(), 'Requires approved create data and mutation authorization.');
     const data = getPriceCodeCreateData();
     let created = false;
@@ -200,34 +221,51 @@ test.describe('Price Codes maintenance', () => {
     }
   });
 
-  test('@price-code @e2e @mutation @regression create Price Code covers with-tax and without-tax VAT scenarios', async ({ priceCodes }, testInfo) => {
-    testInfo.setTimeout(9 * 60_000);
+  test('@price-code @e2e @mutation @regression create Price Code covers without-tax VAT scenario', async ({ priceCodes }, testInfo) => {
+    testInfo.setTimeout(30 * 60_000);
     test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeMutationData(), 'Requires approved create data and mutation authorization.');
     const base = getPriceCodeCreateData();
-    const variants = [
-      { label: 'without tax', code: `${base.code.slice(0, 5)}A`, vatOption: 'NO TAX - 0.00', includeVat: false },
-      { label: 'with tax', code: `${base.code.slice(0, 5)}B`, vatOption: 'VAT06 - 0.06', includeVat: true },
-    ];
+    const data = {
+      ...base,
+      code: `${base.code.slice(0, 5)}A`,
+      description: `${base.code.slice(0, 5)}A DESCRIPTION`,
+      vatOption: 'NO TAX - 0.00',
+      includeVat: false,
+    };
+    let created = false;
+    try {
+      await priceCodes.goto();
+      await priceCodes.expectLoaded();
+      await priceCodes.createPriceCode(data);
+      created = true;
+      await priceCodes.expectPriceCodeRow(data.code, data.description);
+    } finally {
+      if (created) await priceCodes.archivePriceCode(data.code).catch(() => undefined);
+      await priceCodes.goto().catch(() => undefined);
+    }
+  });
 
-    for (const variant of variants) {
-      const data = {
-        ...base,
-        code: variant.code,
-        description: `${variant.code} DESCRIPTION`,
-        vatOption: variant.vatOption,
-        includeVat: variant.includeVat,
-      };
-      let created = false;
-      try {
-        await priceCodes.goto();
-        await priceCodes.expectLoaded();
-        await priceCodes.createPriceCode(data);
-        created = true;
-        await priceCodes.expectPriceCodeRow(data.code, data.description);
-      } finally {
-        if (created) await priceCodes.archivePriceCode(data.code).catch(() => undefined);
-        await priceCodes.goto().catch(() => undefined);
-      }
+  test('@price-code @e2e @mutation @regression create Price Code covers with-tax VAT scenario', async ({ priceCodes }, testInfo) => {
+    testInfo.setTimeout(30 * 60_000);
+    test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeMutationData(), 'Requires approved create data and mutation authorization.');
+    const base = getPriceCodeCreateData();
+    const data = {
+      ...base,
+      code: `${base.code.slice(0, 5)}B`,
+      description: `${base.code.slice(0, 5)}B DESCRIPTION`,
+      vatOption: 'VAT06 - 0.06',
+      includeVat: true,
+    };
+    let created = false;
+    try {
+      await priceCodes.goto();
+      await priceCodes.expectLoaded();
+      await priceCodes.createPriceCode(data);
+      created = true;
+      await priceCodes.expectPriceCodeRow(data.code, data.description);
+    } finally {
+      if (created) await priceCodes.archivePriceCode(data.code).catch(() => undefined);
+      await priceCodes.goto().catch(() => undefined);
     }
   });
 
@@ -238,6 +276,10 @@ test.describe('Price Codes maintenance', () => {
     const data = getPriceCodeCreateData();
     let created = false;
     try {
+      // The priceList fixture navigates the shared page to the Price List
+      // screen as part of its setup, so explicitly return to Price Code
+      // Maintenance before relying on it being loaded here.
+      await priceCodes.goto();
       await priceCodes.expectLoaded();
       await priceCodes.createPriceCode(data);
       created = true;

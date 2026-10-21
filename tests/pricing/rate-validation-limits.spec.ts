@@ -17,7 +17,7 @@ test.describe('Rate Validation Limits Maintenance', () => {
   });
 
   test('@rate-validation @regression @functional Rate Validation Limits exposes an Environment selector', async ({ rateValidationLimits }) => {
-    test.skip(!(await rateValidationLimits.hasEnvironment()), 'The current environment does not expose an Environment selector.');
+    test.skip(!(await rateValidationLimits.hasEnvironment()), 'The current environment does not expose an Environment selector.ery');
     await expect(rateValidationLimits).toBeTruthy();
   });
 

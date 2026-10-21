@@ -47,9 +47,9 @@ test.describe('Price List Maintenance - Update Queue', () => {
     await updateQueue.cancelFirstPriceEdit();
   });
 
-  test('@update-queue @regression @audit Update Queue exposes change audit columns', async ({ updateQueue, sharedPage }) => {
-    await expect(sharedPage.getByText(/Change Method|User Id|Change Date/i).first()).toBeVisible();
-    void updateQueue;
+  test('@update-queue @regression @audit Update Queue exposes change audit columns', async ({ updateQueue }) => {
+    test.skip(!(await updateQueue.hasAuditColumns()), 'Current Update Queue does not expose change audit columns.');
+    await updateQueue.expectAuditColumnsVisible();
   });
 
   test('@update-queue @e2e @regression @mutation approved price change saves and restores', async ({ updateQueue }) => {

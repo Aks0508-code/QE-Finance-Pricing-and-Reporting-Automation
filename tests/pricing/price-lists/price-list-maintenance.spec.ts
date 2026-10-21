@@ -1,6 +1,8 @@
 import { expect, test } from '../../../fixtures/pricing.fixture';
-import { hasPriceCodeItemData, getPriceCodeItemData } from '../../../config/price-code-data';
+import { hasPriceCodeItemData, getPriceCodeItemData, getVerifiedPriceCodeItem } from '../../../config/price-code-data';
 import { priceListLocators } from '../../../locators/pricing/price-lists.locators';
+import { PriceCodeMaintenancePage } from '../../../pages/pricing/price-codes/price-code-maintenance.page';
+import { PriceListMaintenancePage } from '../../../pages/pricing/price-lists/price-list-maintenance.page';
 
 test.describe('Price List Maintenance', () => {
   test('@price-list @smoke @pricing-regression @functional Price List Maintenance page loads', async ({ priceList }) => {
@@ -34,7 +36,12 @@ test.describe('Price List Maintenance', () => {
     test.skip(!hasPriceCodeItemData(), 'Requires an approved item CSV/list or PRICE_CODE_TEST_ITEM.');
     await priceList.expectLoaded();
     test.skip(!(await priceList.hasSearchControls()), 'Price List Maintenance does not expose item search controls on this stage page.');
-    const item = getPriceCodeItemData();
+    // Use the verified item for the configured Price Code (falls back to the
+    // general random pool only if no verified item is configured), since
+    // this assertion requires the item to actually appear in this Price
+    // List's results, unlike the general random pool which may contain
+    // items outside this Price Code's list.
+    const item = getVerifiedPriceCodeItem();
     await priceList.searchByItem(item);
     await priceList.expectItemVisible(item);
   });
@@ -51,9 +58,18 @@ test.describe('Price List Maintenance', () => {
     expect(filename.toLowerCase()).toMatch(/\.(xls|xlsx|csv)$/);
   });
 
-  test('@price-list @e2e @regression @functional Price List pagination controls are available when exposed', async ({ priceList }) => {
-    test.skip(!(await priceList.hasPaginationControls()), 'Price List pagination controls are not exposed on this stage page.');
-    await priceList.expectPaginationControls();
+  test('@price-list @e2e @regression @functional Price List pagination controls are available when exposed', async ({ priceList, sharedPage }) => {
+    let target = priceList;
+    if (!(await target.hasPaginationControls())) {
+      const paginationCode = process.env.PRICE_LIST_PAGINATION_CODE?.trim().replace('*', '');
+      if (paginationCode) {
+        const priceCodes = new PriceCodeMaintenancePage(sharedPage);
+        await priceCodes.openPriceListForCode(paginationCode).catch(() => undefined);
+        target = new PriceListMaintenancePage(sharedPage);
+      }
+    }
+    test.skip(!(await target.hasPaginationControls()), 'Price List pagination controls are not exposed on this stage page.');
+    await target.expectPaginationControls();
   });
 
   test('@price-list @e2e @regression @functional Price List delete and save/cancel controls are available when exposed', async ({ priceList }) => {

@@ -127,6 +127,19 @@ export function getPriceCodeItemData(): string {
   return randomValue(getConfiguredItemIds(), 'item');
 }
 
+/**
+ * Returns a single item verified to belong to the configured Price Code's
+ * Price List (PRICE_CODE_TEST_ITEM), for assertions that require the item to
+ * actually be visible in search results. Falls back to the general random
+ * item pool (which may include items outside this Price Code's list, and is
+ * only suitable for tests that don't assert visibility) when no verified
+ * item is configured.
+ */
+export function getVerifiedPriceCodeItem(): string {
+  const item = process.env.PRICE_CODE_TEST_ITEM?.trim();
+  return item || getPriceCodeItemData();
+}
+
 export function hasPriceCodeSearchData(): boolean {
   return hasPriceCodeItemData() && Boolean(process.env.PRICE_CODE_TEST_CATEGORY?.trim() || process.env.PRICE_CODE_TEST_CATEGORIES?.trim());
 }

@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { test as base, expect, type BrowserContext, type Page } from '@playwright/test';
 import { AshleyNetShellPage } from '../pages/pricing/common/ashley-net-shell.page';
 import { PriceCodeMaintenancePage } from '../pages/pricing/price-codes/price-code-maintenance.page';
@@ -24,8 +26,14 @@ type PricingWorkerFixtures = {
 
 export const test = base.extend<PricingFixtures, PricingWorkerFixtures>({
   sharedContext: [async ({ browser }, use, workerInfo) => {
+    // Reuse the same authenticated storage state as the rest of the suite
+    // (see playwright.config.ts) so this worker's grid data matches what
+    // an authenticated session sees, instead of an anonymous/blank context.
+    const storageStatePath = resolve(__dirname, '..', 'auth', 'stage-storage-state.json');
+    const storageState = existsSync(storageStatePath) ? storageStatePath : undefined;
     const context = await browser.newContext({
       recordVideo: { dir: `${workerInfo.project.outputDir}/videos` },
+      ...(storageState ? { storageState } : {}),
     });
     await use(context);
     await context.close();
@@ -52,7 +60,23 @@ export const test = base.extend<PricingFixtures, PricingWorkerFixtures>({
     await priceCodes.goto();
     await shell.loginIfRequired();
     if (sharedPage.url().includes('/login')) await priceCodes.goto();
-    await priceCodes.openPriceListViaPriceCode();
+    // Open the Price List for the explicitly configured Price Code (falls
+    // back to the first available link if not configured), so item-search
+    // and other data-dependent assertions target the intended code.
+    const configuredCode = process.env.PRICE_CODE_TEST_CODE?.trim();
+    if (configuredCode && !configuredCode.includes('*')) {
+      // The configured code may not have an associated Price List (e.g. a
+      // replacement test code picked purely for being unlocked/active). Fall
+      // back to the first available Price List link rather than failing the
+      // fixture (and every test that depends on it) outright.
+      await priceCodes.openPriceListForCode(configuredCode).catch(async () => {
+        await priceCodes.goto();
+        await priceCodes.expectLoaded();
+        await priceCodes.openPriceListViaPriceCode();
+      });
+    } else {
+      await priceCodes.openPriceListViaPriceCode();
+    }
     const priceList = new PriceListMaintenancePage(sharedPage);
     await use(priceList);
   },
