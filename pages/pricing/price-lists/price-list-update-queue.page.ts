@@ -53,6 +53,19 @@ export class PriceListUpdateQueuePage {
   }
 
   async expectAuditColumnsVisible(): Promise<void> {
+    // The Update Queue grid can be slow to finish rendering on stage, so the
+    // audit column header may briefly resolve as present-but-hidden before
+    // the grid finishes its postback. Retry with a reload instead of relying
+    // on a single toBeVisible() timeout.
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      if (await priceListUpdateQueueLocators.auditColumns(this.page).isVisible().catch(() => false)) {
+        await expect(priceListUpdateQueueLocators.auditColumns(this.page)).toBeVisible();
+        return;
+      }
+      await this.page.waitForTimeout(3_000);
+      await this.goto();
+      await this.expectLoaded();
+    }
     await expect(priceListUpdateQueueLocators.auditColumns(this.page)).toBeVisible();
   }
 

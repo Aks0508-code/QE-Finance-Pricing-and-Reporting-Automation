@@ -168,32 +168,40 @@ test.describe('Price Codes maintenance', () => {
 
   test('@price-code @e2e @mutation @regression approved Price Code can be archived, found inactive, reactivated, and found active again', async ({ priceCodes }, testInfo) => {
     testInfo.setTimeout(30 * 60_000);
-    test.skip(!runtimeConfig.mutationEnabled, 'Price Code mutations are disabled.');
-    // The fixed .env archive code can go stale (removed from stage entirely,
-    // or now carrying attached Price Lists), and merely being configured in
-    // .env does not mean it is still valid on stage. Always discover a
-    // currently-deletable active Price Code by scrolling the live grid so
-    // the test is resilient to stale static configuration.
-    const code = await priceCodes.findAnyDeletableActivePriceCode();
+    test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeMutationData(), 'Price Code mutations are disabled or required create data is missing.');
+    // Scanning the live grid for a pre-existing active Price Code with an
+    // enabled delete checkbox is unreliable: every currently active code on
+    // stage may already have Price Lists/items attached, which disables its
+    // delete checkbox and leaves nothing "disposable" to find. Instead,
+    // create a brand-new Price Code here (which starts with no items
+    // attached, so its delete checkbox is guaranteed enabled) and use that.
+    const data = getPriceCodeCreateData();
     await priceCodes.expectLoaded();
-    await priceCodes.archiveAndReactivatePriceCode(code);
-    await priceCodes.expectActivePriceCodeOccursOnce(code);
+    await priceCodes.createPriceCode(data);
+    await priceCodes.archiveAndReactivatePriceCode(data.code);
+    await priceCodes.expectActivePriceCodeOccursOnce(data.code);
   });
 
   test('@price-code @e2e @mutation @archive cancel archive keeps a disposable Price Code active', async ({ priceCodes }, testInfo) => {
     testInfo.setTimeout(30 * 60_000);
-    test.skip(!runtimeConfig.mutationEnabled, 'Price Code mutations are disabled.');
-    const code = await priceCodes.findAnyDeletableActivePriceCode();
-    await priceCodes.cancelArchivePriceCode(code);
-    await priceCodes.expectActivePriceCodeOccursOnce(code);
+    test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeMutationData(), 'Price Code mutations are disabled or required create data is missing.');
+    const base = getPriceCodeCreateData();
+    const data = { ...base, code: `${base.code.slice(0, 5)}C`, description: `${base.code.slice(0, 5)}C DESCRIPTION` };
+    await priceCodes.expectLoaded();
+    await priceCodes.createPriceCode(data);
+    await priceCodes.cancelArchivePriceCode(data.code);
+    await priceCodes.expectActivePriceCodeOccursOnce(data.code);
   });
 
   test('@price-code @e2e @mutation @archive continue archive moves a disposable Price Code to inactive', async ({ priceCodes }, testInfo) => {
     testInfo.setTimeout(30 * 60_000);
-    test.skip(!runtimeConfig.mutationEnabled, 'Price Code mutations are disabled.');
-    const code = await priceCodes.findAnyDeletableActivePriceCode();
-    await priceCodes.archiveAndReactivatePriceCode(code);
-    await priceCodes.expectActivePriceCodeOccursOnce(code);
+    test.skip(!runtimeConfig.mutationEnabled || !hasPriceCodeMutationData(), 'Price Code mutations are disabled or required create data is missing.');
+    const base = getPriceCodeCreateData();
+    const data = { ...base, code: `${base.code.slice(0, 5)}D`, description: `${base.code.slice(0, 5)}D DESCRIPTION` };
+    await priceCodes.expectLoaded();
+    await priceCodes.createPriceCode(data);
+    await priceCodes.archiveAndReactivatePriceCode(data.code);
+    await priceCodes.expectActivePriceCodeOccursOnce(data.code);
   });
 
   test('@price-code @e2e @mutation @regression create archive reactivate lifecycle completes end to end', async ({ priceCodes }, testInfo) => {
